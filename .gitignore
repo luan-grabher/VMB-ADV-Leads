@@ -127,6 +127,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+config.json
+tmp/
 
 # Spyder project settings
 .spyderproject

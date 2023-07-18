@@ -1,0 +1,7 @@
+{
+    "gmail" : {
+        "user" : "user@gmail.com",
+        "pass" : "app password",
+        "filter": "Remessa do Dia"
+    }
+}
