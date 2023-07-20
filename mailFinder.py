@@ -1,6 +1,7 @@
 import imaplib
 import email
 import os
+from VMB_ADV_Leads import getConfig
 
 def connect_to_gmail(username, password):
     try:
@@ -49,10 +50,7 @@ def find_unread_email_with_subject_and_attachment(mail, subject, attachment_exte
     return None
 
 def main():
-    import json
-
-    with open('config.json') as json_file:
-        config = json.load(json_file)
+    config = getConfig()
 
     # Configurações da conta do Gmail
     username = config['gmail']['user']
