@@ -92,4 +92,6 @@ if __name__ == "__main__":
     config = getConfig()
 
     arquivoTeste = './tmp/arquivo.zip'
-    getDadosZip(config, arquivoTeste)
+    print(
+        getDadosZip(config, arquivoTeste)
+    )
