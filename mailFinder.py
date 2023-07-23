@@ -1,7 +1,7 @@
 import imaplib
 import email
 import os
-from VMB_ADV_Leads import getConfig
+from config import getConfig
 
 def connect_to_gmail(username, password):
     try:
