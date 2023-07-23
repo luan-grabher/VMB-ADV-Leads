@@ -3,8 +3,8 @@
 # [x] Ler e-mails e achar ultimo e-mail nao lido com assunto '%Remessa do Dia%' e contém anexo .zip
 # [x] Baixar arquivo zip do e-mail
 # [x] Extrai arquivos do zip
-# [ ] Conforme a lista de filtros de arquivos .xlsx no arquivo de configuração extrai os dados de cada arquivo com os filtros necessários
-# [ ] Faz o filtro desses dados e pega o nro processo
+# [x] Conforme a lista de filtros de arquivos .xlsx no arquivo de configuração extrai os dados de cada arquivo com os filtros necessários
+# [x] Faz o filtro desses dados e pega o nro processo
 # [ ] Login TJSP
 # [ ] Entrar na pagina de detalhes do processo
 # [ ] Parar se for menor que R$ 100.000,00
@@ -35,7 +35,7 @@ def main():
     if not attachment_filename:
         return
     
-    dadosExcel = getDadosZip(config, attachment_filename)
+    TJSP, TJRS, TJMT = getDadosZip(config, attachment_filename)
 
 if __name__ == "__main__":
     main()

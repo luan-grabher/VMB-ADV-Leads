@@ -86,7 +86,11 @@ def getDadosZip(config, zip_filename):
             dadosFiltrados = pd.concat([dadosFiltrados, dado.to_frame().transpose()], ignore_index=True)
 
     
-    return dadosFiltrados
+    TJSP = dadosFiltrados.loc[dadosFiltrados['Tribunal'] == 'TJSP']
+    TJRS = dadosFiltrados.loc[dadosFiltrados['Tribunal'] == 'TJRS']
+    TJMT = dadosFiltrados.loc[dadosFiltrados['Tribunal'] == 'TJMT']
+
+    return [TJSP, TJRS, TJMT]
 
 if __name__ == "__main__":
     config = getConfig()
