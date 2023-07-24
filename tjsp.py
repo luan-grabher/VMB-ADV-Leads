@@ -212,4 +212,4 @@ if __name__ == "__main__":
     TJSP, TJRS, TJMT = getDadosZip(config, arquivoTeste)
 
     dados_processos = get_dados_processos_tjsp(config, TJSP)
-    print(dados_processos)
+    dados_processos.to_json('./tmp/dados_processos.json', orient='records', indent=4)
