@@ -5,13 +5,13 @@
 # [x] Extrai arquivos do zip
 # [x] Conforme a lista de filtros de arquivos .xlsx no arquivo de configuração extrai os dados de cada arquivo com os filtros necessários
 # [x] Faz o filtro desses dados e pega o nro processo
-# [ ] Login TJSP
-# [ ] Entrar na pagina de detalhes do processo
-# [ ] Parar se for menor que R$ 100.000,00
-# [ ] Parar se no final ‘qto’ houver advogado
-# [ ] Pega detalhes do processo nome da pessoa/empresa, valor, datas
-# [ ] Pegar CNPJ/CPF em ‘Visualizar Autos’ → Petição Inicial
-# [ ] Login Assertiva
+# [x] Login TJSP
+# [x] Entrar na pagina de detalhes do processo
+# [x] Parar se for menor que R$ 100.000,00
+# [x] Parar se no final ‘qto’ houver advogado
+# [x] Pega detalhes do processo nome da pessoa/empresa, valor, datas
+# [x] Pegar CNPJ/CPF em ‘Visualizar Autos’ → Petição Inicial
+# [x] Login Assertiva
 # [ ] Consulta por CNPJ/CPF na Assertiva
 # [ ] Clica em ‘buscar relacionados’ até desaparecer e pega 3 primeiros numeros com whatsapp habilitado
 # [ ] Inserir Dados na planilha google
