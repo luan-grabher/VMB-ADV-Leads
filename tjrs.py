@@ -11,15 +11,16 @@ import pandas as pd
 import time
 
 
-def get_dados_processos_tjsp(config, processos):
+def get_dados_processos_tjrs(config, processos):
     install()
 
-    user = config['tjsp']['user']
-    password = config['tjsp']['password']
-    urls = config['tjsp']['urls']
+    user = config['tjrs']['user']
+    password = config['tjrs']['password']
+    urls = config['tjrs']['urls']
     valorMinimo = float(config['valorMinimo'])
 
     driver = webdriver.Chrome()
+    driver.set_window_size(1050, 1000)
 
     login(driver, urls['login'], user, password)
 
@@ -48,7 +49,7 @@ def get_dados_processos_tjsp(config, processos):
                         'Socio': [socio],
                         'Documento': [documento],
                         'Banco': [banco],
-                        'Tribunal' : ['TJSP']
+                        'Tribunal' : ['TJRS']
                     })
                 ])
 
@@ -59,11 +60,15 @@ def get_dados_processos_tjsp(config, processos):
 
 def login(driver, loginConfig, user, password):
     driver.get(loginConfig['url'])
+
     driver.find_element(
         By.CSS_SELECTOR, loginConfig['css']['user']).send_keys(user)
     driver.find_element(
         By.CSS_SELECTOR, loginConfig['css']['password']).send_keys(password)
+
     driver.find_element(By.CSS_SELECTOR, loginConfig['css']['submit']).click()
+
+    input('Pressione enter para continuar...')
 
 
 def acessar_detalhes_processo(driver, consultaConfig, processo):
@@ -211,5 +216,5 @@ if __name__ == "__main__":
     arquivoTeste = './tmp/arquivo.zip'
     TJSP, TJRS, TJMT = getDadosZip(config, arquivoTeste)
 
-    dados_processos = get_dados_processos_tjsp(config, TJSP)
-    dados_processos.to_json('./tmp/dados_processos.json', orient='records', indent=4)
+    dados_processos = get_dados_processos_tjrs(config, TJRS)
+    print(dados_processos)

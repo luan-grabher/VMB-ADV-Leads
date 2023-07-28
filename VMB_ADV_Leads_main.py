@@ -12,10 +12,10 @@
 # [x] Pega detalhes do processo nome da pessoa/empresa, valor, datas
 # [x] Pegar CNPJ/CPF em ‘Visualizar Autos’ → Petição Inicial
 # [x] Login Assertiva
-# [ ] Consulta por CNPJ/CPF na Assertiva
-# [ ] Clica em ‘buscar relacionados’ até desaparecer e pega 3 primeiros numeros com whatsapp habilitado
-# [ ] Inserir Dados na planilha google
-# [ ] Chamar No Whatsapp. Criar link com o numero e mensagem personalizada abre o whatsapp web e envia a mensagem.
+# [x] Consulta por CNPJ/CPF na Assertiva
+# [x] Clica em ‘buscar relacionados’ até desaparecer e pega 3 primeiros numeros com whatsapp habilitado
+# [x] Inserir Dados na planilha google
+# [x] Chamar No Whatsapp. Criar link com o numero e mensagem personalizada abre o whatsapp web e envia a mensagem.
 
 from arquivoExcel import getDadosZip
 from assertiva import getProcessosComTelefone
