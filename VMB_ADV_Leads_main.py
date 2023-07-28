@@ -25,6 +25,8 @@ from mailFinder import connect_to_gmail, find_unread_email_with_subject_and_atta
 from tjsp import get_dados_processos_tjsp
 import pandas as pd
 
+from whatsapp import send_whatsapp_messages_to_processos
+
 def main():
     config = getConfig()
     username = config['gmail']['user']
@@ -48,6 +50,8 @@ def main():
     processos_com_telefone = getProcessosComTelefone(config, processos)
     
     insert_processos_on_sheet(config, processos_com_telefone)
+
+    send_whatsapp_messages_to_processos(config, processos_com_telefone)
 
 if __name__ == "__main__":
     main()

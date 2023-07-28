@@ -130,6 +130,7 @@ venv.bak/
 config.json
 google_sheets_credentials.json
 token_google.json
+PyWhatKit_DB.txt
 tmp/
 
 # Spyder project settings
