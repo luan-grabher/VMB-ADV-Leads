@@ -35,7 +35,8 @@ def get_dados_processos_tjrs(config, processos):
         if valorAcaoProcesso >= valorMinimo:
 
             banco, cliente, socio = get_partes(driver, consultaConfig)
-            if 'Advogad' not in cliente and 'Advogad' not in socio:
+            if socio != None and socio != '':
+
                 data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
                 documento = get_cnpj_ou_cpf(driver, consultaConfig)
 
@@ -85,50 +86,28 @@ def acessar_detalhes_processo(driver, consultaConfig, processo):
 
 
 def get_valor_acao_processo(driver, consultaConfig):
-    valorAcaoProcesso = driver.find_element(
-        By.CSS_SELECTOR, consultaConfig['css']['valorAcaoProcesso'])
-    time.sleep(0.25)
-    valorAcaoProcesso = valorAcaoProcesso.text
-    valorAcaoProcesso = valorAcaoProcesso.replace(
-        'R$ ', '').replace('.', '').replace(',', '.')
+    btnHistoricoValorCausa = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['btnHistoricoValorCausa']))
+    )
+    valorAcaoProcesso = driver.execute_script('return arguments[0].parentElement.textContent', btnHistoricoValorCausa)
+    valorAcaoProcesso = valorAcaoProcesso.replace('R$ ', '').replace('.', '').replace(',', '.').strip()
     valorAcaoProcesso = float(valorAcaoProcesso)
 
     return valorAcaoProcesso
 
 
 def get_partes(driver, consultaConfig):
-    partes_css  = consultaConfig['css']['todasPartes']
+    reuBox = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['reuBox'])
 
-    btnTodasPartes = None
-    try:
-        btnTodasPartes = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['btnMostrarTodasPartes'])
-    except:
-        pass
-
-    if btnTodasPartes:
-        btnTodasPartes.click()
-    else:
-        partes_css = consultaConfig['css']['partesPrincipais']
-
-    partes = driver.find_elements(By.CSS_SELECTOR, partes_css)
-    partes = [parte.find_elements(By.TAG_NAME, 'td')[1] for parte in partes]
-    time.sleep(0.25)
-
-    banco = partes[0].text.lower()
-    banco = banco.split('advogad')[0].replace('\n', ' ').strip()
-    banco = ' '.join([word[0].upper() + word[1:] for word in banco.split(' ')])
-    banco = banco.replace('Banco ', '').strip()
-
-    if banco.startswith('Do Brasil'):
-        banco = 'Banco ' + banco
-
-    quantidade_partes = len(partes)
-    if quantidade_partes == 2:
-        return banco, '', partes[1].text
-    elif quantidade_partes > 2:
-        return banco, partes[1].text, partes[2].text
+    #check if reubox html has 'advogado'
+    reuBoxHtml = reuBox.get_attribute('innerHTML')
+    hasAdvogado = re.search(r'advogado', reuBoxHtml.lower())
+    if hasAdvogado != None:
+        return '', '', ''
     
-    return banco, '', ''
+
+    
+    return '', '', ''
 
 def get_data_hora_distribuicao(driver, consultaConfig):
     data_hora_distribuicao = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['dataHoraDistribuicaoProcesso'])
