@@ -31,7 +31,7 @@ def get_dados_processos_tjrs(config, processos):
         acessar_detalhes_processo(driver, consultaConfig, processo)
 
         valorAcaoProcesso = get_valor_acao_processo(
-            driver, consultaConfig, valorMinimo)
+            driver, consultaConfig)
         if valorAcaoProcesso >= valorMinimo:
 
             banco, cliente, socio = get_partes(driver, consultaConfig)
@@ -68,28 +68,23 @@ def login(driver, loginConfig, user, password):
 
     driver.find_element(By.CSS_SELECTOR, loginConfig['css']['submit']).click()
 
-    input('Pressione enter para continuar...')
+    resolveuCaptcha = False
+    while not resolveuCaptcha:
+        hasHashOnUrl = re.search(r'hash=', driver.current_url)
+        resolveuCaptcha = hasHashOnUrl != None
 
 
 def acessar_detalhes_processo(driver, consultaConfig, processo):
-    tj_number = consultaConfig['tjNumber']
-
-    nro_processo_completo = processo['Processo']
-    nro_processo, nro_foro = nro_processo_completo.split(tj_number)
-
-    driver.get(consultaConfig['url'])
-    driver.find_element(
-        By.CSS_SELECTOR, consultaConfig['css']['numeroDigitoAnoUnificado']).send_keys(nro_processo)
-    driver.find_element(
-        By.CSS_SELECTOR, consultaConfig['css']['foroNumeroUnificado']).send_keys(nro_foro)
-    driver.find_element(
-        By.CSS_SELECTOR, consultaConfig['css']['botaoConsultarProcessos']).click()
-
-    driver.find_element(
-        By.CSS_SELECTOR, consultaConfig['css']['botaoExpandirDadosSecundarios']).click()
+    nro_processo = processo['Processo']
+    
+    inputPesquisa =  driver.find_element(
+        By.CSS_SELECTOR, consultaConfig['css']['inputPesquisa'])
+    inputPesquisa.clear()
+    inputPesquisa.send_keys(nro_processo)
+    inputPesquisa.send_keys(u'\ue007')
 
 
-def get_valor_acao_processo(driver, consultaConfig, valorMinimo):
+def get_valor_acao_processo(driver, consultaConfig):
     valorAcaoProcesso = driver.find_element(
         By.CSS_SELECTOR, consultaConfig['css']['valorAcaoProcesso'])
     time.sleep(0.25)
