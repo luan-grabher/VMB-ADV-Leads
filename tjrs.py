@@ -99,13 +99,21 @@ def get_valor_acao_processo(driver, consultaConfig):
 def get_partes(driver, consultaConfig):
     reuBox = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['reuBox'])
 
-    #check if reubox html has 'advogado'
     reuBoxHtml = reuBox.get_attribute('innerHTML')
     hasAdvogado = re.search(r'advogado', reuBoxHtml.lower())
     if hasAdvogado != None:
         return '', '', ''
-    
 
+    nomeBanco = ''
+    nomeSocio = ''
+
+    try:
+        nomeBanco = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeBanco']).text
+        nomeSocio = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeSocio']).text
+
+        return nomeBanco, None, nomeSocio
+    except:
+        pass
     
     return '', '', ''
 
