@@ -48,7 +48,8 @@ def get_dados_processos_tjsp(config, processos):
                         'Cliente': [cliente],
                         'Socio': [socio],
                         'Documento': [documento],
-                        'Banco': [banco]
+                        'Banco': [banco],
+                        'Tribunal' : ['TJSP']
                     })
                 ])
 

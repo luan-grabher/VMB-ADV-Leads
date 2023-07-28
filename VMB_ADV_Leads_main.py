@@ -20,6 +20,7 @@
 from arquivoExcel import getDadosZip
 from assertiva import getProcessosComTelefone
 from config import getConfig
+from googleSheets import insert_processos_on_sheet
 from mailFinder import connect_to_gmail, find_unread_email_with_subject_and_attachment
 from tjsp import get_dados_processos_tjsp
 import pandas as pd
@@ -45,6 +46,8 @@ def main():
     processos = pd.concat([processosTJSP])
 
     processos_com_telefone = getProcessosComTelefone(config, processos)
+    
+    insert_processos_on_sheet(config, processos_com_telefone)
 
 if __name__ == "__main__":
     main()
