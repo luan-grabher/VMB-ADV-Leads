@@ -33,26 +33,28 @@ def get_dados_processos_tjmt(config, processos):
         valorAcaoProcesso = get_valor_acao_processo(
             driver, consultaConfig)
         if valorAcaoProcesso >= valorMinimo:
+            
+            if not hasAdvogado(driver, consultaConfig):
 
-            banco, cliente, socio = get_partes(driver, consultaConfig)
-            if socio != None and socio != '':
+                banco, cliente, socio = get_partes(driver, consultaConfig)
+                if socio != None and socio != '':
 
-                data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
-                documento = get_cnpj_ou_cpf(driver, consultaConfig)
+                    data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
+                    documento = get_cnpj_ou_cpf(driver, consultaConfig)
 
-                dados_processos = pd.concat([
-                    dados_processos,
-                    pd.DataFrame({
-                        'Data Distribuicao': [data_hora_distribuicao],
-                        'Processo': [processo['Processo']],
-                        'Valor': [valorAcaoProcesso],
-                        'Cliente': [cliente],
-                        'Socio': [socio],
-                        'Documento': [documento],
-                        'Banco': [banco],
-                        'Tribunal' : ['TJMT']
-                    })
-                ])
+                    dados_processos = pd.concat([
+                        dados_processos,
+                        pd.DataFrame({
+                            'Data Distribuicao': [data_hora_distribuicao],
+                            'Processo': [processo['Processo']],
+                            'Valor': [valorAcaoProcesso],
+                            'Cliente': [cliente],
+                            'Socio': [socio],
+                            'Documento': [documento],
+                            'Banco': [banco],
+                            'Tribunal' : ['TJMT']
+                        })
+                    ])
 
     driver.quit()
 
@@ -130,6 +132,14 @@ def get_valor_acao_processo(driver, consultaConfig):
 
     return valorAcao
 
+def hasAdvogado(driver, consultaConfig):
+    poloPassivo = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['poloPassivo'])
+    htmlLower = poloPassivo.get_attribute('innerHTML').lower()
+    hasAdvogado = re.search(r'advogad', htmlLower)
+    if hasAdvogado != None:
+        return True
+    
+    return False
 
 def get_partes(driver, consultaConfig):
     reuBox = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['reuBox'])
