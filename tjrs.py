@@ -104,9 +104,6 @@ def get_partes(driver, consultaConfig):
     if hasAdvogado != None:
         return '', '', ''
 
-    nomeBanco = ''
-    nomeSocio = ''
-
     try:
         nomeBanco = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeBanco']).text
         nomeSocio = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeSocio']).text
@@ -126,71 +123,10 @@ def get_data_hora_distribuicao(driver, consultaConfig):
     return data_hora_distribuicao
 
 def get_cnpj_ou_cpf(driver, consultaConfig):
-    btnVisualizarAutos = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['btnVisualizarAutos'])
-    driver.execute_script("arguments[0].removeAttribute('target')", btnVisualizarAutos)
-    btnVisualizarAutos.click()
+    documentoSocio = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['documentoSocio'])
+    documentoSocio = documentoSocio.text
 
-    btnPrimeiraPagina = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['btnPrimeiraPagina']))
-    )
-    btnPrimeiraPagina.click()
-    time.sleep(1)
-    btnPrimeiraPagina.click() #as vezes buga, entao clica duas vezes p
-    time.sleep(1)
-
-    iframePdf = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['iframePdf'])
-    driver.switch_to.frame(iframePdf)
-
-    textoPDF = ''
-    cssPaginaPDF = consultaConfig['css']['paginaPDF']
-        
-    primeiraPagina = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, cssPaginaPDF.replace("{numero_pagina}", '1')))
-    )
-    time.sleep(0.5)
-    textoPDF = primeiraPagina.text
-
-    
-    segundaPagina = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, cssPaginaPDF.replace("{numero_pagina}", '2')))
-    )
-    time.sleep(0.5)
-    textoPDF += ' ' + segundaPagina.text
-    
-
-    textoPDF = textoPDF.replace('\n', ' ').strip()
-    textoPDF = textoPDF.replace('  ', ' ').strip()
-    textoPDF = textoPDF.replace('/ ', '/').strip()
-    textoPDF = textoPDF.replace(' /', '/').strip()
-    textoPDF = textoPDF.replace(' .', '.').strip()
-    textoPDF = textoPDF.replace('. ', '.').strip()
-    textoPDF = textoPDF.replace(' -', '-').strip()
-    textoPDF = textoPDF.replace('- ', '-').strip()
-    textoPDF = re.sub(r"(\d) \.", r"\1.", textoPDF)
-    textoPDF = textoPDF.lower()
-
-    regexCnpj = "\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
-    regexCpf = "\d{3}\.\d{3}\.\d{3}-\d{2}"
-
-    posicaoPrimeiroCNPJ = re.search(regexCnpj, textoPDF)
-    textoAposCnpjBanco = textoPDF[posicaoPrimeiroCNPJ.end():]
-
-    primeiroCnpjAposBanco = re.search(regexCnpj, textoAposCnpjBanco)
-    if primeiroCnpjAposBanco:
-        primeiroCnpjAposBanco = primeiroCnpjAposBanco.group(0)
-        return primeiroCnpjAposBanco
-    
-    primeiroCpfAposBanco = re.search(regexCpf, textoAposCnpjBanco)
-    if primeiroCpfAposBanco:
-        primeiroCpfAposBanco = primeiroCpfAposBanco.group(0)
-        return primeiroCpfAposBanco
-    
-    primeiroCPF = re.search(regexCpf, textoPDF)
-    if primeiroCPF:
-        primeiroCPF = primeiroCPF.group(0)
-        return primeiroCPF
-
-    return None
+    return documentoSocio
 
 if __name__ == "__main__":
     config = getConfig()
