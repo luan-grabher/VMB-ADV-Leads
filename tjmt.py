@@ -36,11 +36,11 @@ def get_dados_processos_tjmt(config, processos):
             
             if not hasAdvogado(driver, consultaConfig):
 
-                banco, cliente, socio = get_partes(driver, consultaConfig)
+                banco, cliente, socio, cnpj, cpf = get_partes(driver, consultaConfig)
                 if socio != None and socio != '':
 
                     data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
-                    documento = get_cnpj_ou_cpf(driver, consultaConfig)
+                    documento = cnpj if cnpj != None and cnpj != '' else cpf
 
                     dados_processos = pd.concat([
                         dados_processos,
@@ -142,36 +142,80 @@ def hasAdvogado(driver, consultaConfig):
     return False
 
 def get_partes(driver, consultaConfig):
-    reuBox = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['reuBox'])
+    poloPassivo = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['poloPassivo'])
 
-    reuBoxHtml = reuBox.get_attribute('innerHTML')
+    reuBoxHtml = poloPassivo.get_attribute('innerHTML')
     hasAdvogado = re.search(r'advogado', reuBoxHtml.lower())
     if hasAdvogado != None:
         return '', '', ''
 
-    try:
-        nomeBanco = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeBanco']).text
-        nomeSocio = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeSocio']).text
+    poloAtivo = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['poloAtivo']).text
+    poloAtivo = poloAtivo.replace('\n', ' ')
+    poloAtivo = poloAtivo.split('Polo ativo')[1].strip()
+    nomeBanco = poloAtivo.split('- CNPJ')[0].strip()
 
-        return nomeBanco, None, nomeSocio
-    except:
-        pass
+    regexCnpj = "\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
+    regexCpf = "\d{3}\.\d{3}\.\d{3}-\d{2}"
+
+    poloPassivoText = poloPassivo.text
+    poloPassivoText = poloPassivoText.replace('\n', ' ')
+    poloPassivoText = poloPassivoText.split('Polo passivo')[1].strip()
+    poloPassivoSplit = poloPassivoText.split(')')
+    poloPassivoSplit = list(filter(None, poloPassivoSplit))
+
+    cliente = ''
+    socio = ''
+    cnpj = ''
+    cpf = ''
+
+    if len(poloPassivoSplit) > 1:
+        for parte in poloPassivoSplit:
+            isCnpj = re.search(regexCnpj, parte)
+            if isCnpj != None and cnpj == '':
+                cnpj = isCnpj.group(0)
+                cliente = parte.split('- CNPJ')[0].strip()
+            
+            isCpf = re.search(regexCpf, parte)
+            if isCpf != None and cpf == '':
+                cpf = isCpf.group(0)
+                socio = parte.split('- CPF')[0].strip()
+
+            if cnpj != '' and cpf != '':
+                break
+    else:
+        cliente = ''
+        socio = poloPassivoSplit[0].strip()
+        cpf = re.search(regexCpf, poloPassivoSplit[0])
+        cpf = cpf.group(0) if cpf != None else ''
     
-    return '', '', ''
+    return nomeBanco, cliente, socio, cnpj, cpf
 
+mesesAbreviados = {
+    'jan': '01',
+    'fev': '02',
+    'mar': '03',
+    'abr': '04',
+    'mai': '05',
+    'jun': '06',
+    'jul': '07',
+    'ago': '08',
+    'set': '09',
+    'out': '10',
+    'nov': '11',
+    'dez': '12'
+}
 def get_data_hora_distribuicao(driver, consultaConfig):
-    data_hora_distribuicao = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['dataHoraDistribuicaoProcesso'])
+    data_hora_distribuicao = driver.find_elements(By.CSS_SELECTOR, consultaConfig['css']['dataHoraDistribuicaoProcesso'])
+    data_hora_distribuicao = data_hora_distribuicao[-1]
     time.sleep(0.25)
     data_hora_distribuicao = data_hora_distribuicao.text
-    data_hora_distribuicao = data_hora_distribuicao.split(' ')[0]
+
+    data_split = data_hora_distribuicao.split(' ')
+    dia = data_split[0]
+    mes = mesesAbreviados[data_split[1].lower()]
+    ano = data_split[2]
     
-    return data_hora_distribuicao
-
-def get_cnpj_ou_cpf(driver, consultaConfig):
-    documentoSocio = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['documentoSocio'])
-    documentoSocio = documentoSocio.text
-
-    return documentoSocio
+    return f'{dia}/{mes}/{ano}'
 
 if __name__ == "__main__":
     config = getConfig()
