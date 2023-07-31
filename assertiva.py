@@ -29,7 +29,9 @@ def getProcessosComTelefone(config, processos):
         telefone = getTelefone(driver, configAssertiva, processo)
 
         if telefone:
-            processos.at[index, 'Telefone'] = telefone            
+            processos.at[index, 'Telefone'] = telefone       
+
+        time.sleep(2)     
 
     driver.quit()
 

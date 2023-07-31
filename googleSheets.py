@@ -83,7 +83,7 @@ def insert_processos_on_sheet(config, processos):
         row[colunaDocumento] = processo['Documento']
         row[colunaValor] = processo['Valor']
 
-        telefones = json.loads(processo['Telefones']) if processo['Telefones'] != None else []
+        telefones = json.loads(processo['Telefone']) if processo['Telefone'] != None else []
         row[colunaTelefone1] = telefones[0] if len(telefones) > 0 else None
         row[colunaTelefone2] = telefones[1] if len(telefones) > 1 else None
         row[colunaTelefone3] = telefones[2] if len(telefones) > 2 else None
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     processos_fakes['Socio'] = ['FULANO DE TAL', 'CICLANO DE TAL', 'BELTRANO DE TAL']
     processos_fakes['Documento'] = ['99.999.999/0001-01', '123.456.789-00', '987.654.321-00']
     processos_fakes['Banco'] = ['Bradesco S/A', 'Itau S/A', 'Santander S/A']
-    processos_fakes['Telefones'] = [json.dumps(['(51) 99999-9999', '(51) 99999-9999']), json.dumps(['(51) 99999-9999']), None]
+    processos_fakes['Telefone'] = [json.dumps(['(51) 99999-9999', '(51) 99999-9999']), json.dumps(['(51) 99999-9999']), None]
     processos_fakes['Tribunal'] = ['TJSP', 'TJRS', 'TJMT']
 
     insert_processos_on_sheet(config, processos_fakes)

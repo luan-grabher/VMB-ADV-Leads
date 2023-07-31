@@ -132,6 +132,7 @@ google_sheets_credentials.json
 token_google.json
 PyWhatKit_DB.txt
 tmp/
+seleniumProfile/
 
 # Spyder project settings
 .spyderproject

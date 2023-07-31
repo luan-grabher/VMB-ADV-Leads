@@ -22,9 +22,11 @@ from assertiva import getProcessosComTelefone
 from config import getConfig
 from googleSheets import insert_processos_on_sheet
 from mailFinder import connect_to_gmail, find_unread_email_with_subject_and_attachment
+from tjmt import get_dados_processos_tjmt
 from tjrs import get_dados_processos_tjrs
 from tjsp import get_dados_processos_tjsp
 import pandas as pd
+from tkinter import Tk, filedialog, messagebox
 
 from whatsapp import send_whatsapp_messages_to_processos
 
@@ -33,6 +35,7 @@ def main():
     username = config['gmail']['user']
     password = config['gmail']['pass']
     
+    '''
     mail = connect_to_gmail(username, password)
     if not mail:
         return
@@ -41,13 +44,29 @@ def main():
     attachment_filename = find_unread_email_with_subject_and_attachment(mail, filter)
     if not attachment_filename:
         return
+    ''' #NÃO APAGA O CODIGO, POIS PODE SERR RESTAURADO SE FOR UTILIZAR O ROBÔ FULL AUTOMATICO
+
+    Tk().withdraw()
+    messagebox.showinfo('Selecione o arquivo zip de remessa do dia', 'Selecione o arquivo zip de remessa do dia')
+    attachment_filename = filedialog.askopenfilename(defaultextension='.zip', filetypes=[('Arquivo zip', '*.zip')])
+
+    if not attachment_filename:
+        messagebox.showerror('Arquivo zip não selecionado', 'Arquivo zip não selecionado')
+        return
+
+    isZip = attachment_filename.endswith('.zip')
+    if not isZip:
+        messagebox.showerror('Arquivo zip não selecionado', 'Arquivo zip não selecionado')
+        return
+    
     
     TJSP, TJRS, TJMT = getDadosZip(config, attachment_filename)
 
-    processosTJSP = get_dados_processos_tjsp(config, TJSP)
-    processosTJRS = get_dados_processos_tjrs(config, TJRS)
+    processosTJRS = get_dados_processos_tjrs(config, TJRS) if len(TJRS) > 0 else pd.DataFrame()
+    processosTJMT = get_dados_processos_tjmt(config, TJMT) if len(TJMT) > 0 else pd.DataFrame()
+    processosTJSP = get_dados_processos_tjsp(config, TJSP) if len(TJSP) > 0 else pd.DataFrame()
 
-    processos = pd.concat([processosTJSP, processosTJRS], ignore_index=True)
+    processos = pd.concat([processosTJSP, processosTJRS, processosTJMT], ignore_index=True)
 
     processos_com_telefone = getProcessosComTelefone(config, processos)
     
