@@ -46,7 +46,6 @@ def main():
         return
     ''' #NÃO APAGA O CODIGO, POIS PODE SERR RESTAURADO SE FOR UTILIZAR O ROBÔ FULL AUTOMATICO
 
-    #TODO: Salvar informações na planilha do google separada da viviane e luana com status 'aguardando envio whats'
     #TODO: Separar envio de whats em outra execução que seleciona ou a planilha viviane ou a luana com status 'aguardando envio whats' e grava status 'enviado whats' ou 'erro' na planilha
     #TODO: Fazer testes com dados atualizados
     #TODO: Correções de bugs
