@@ -17,7 +17,7 @@
 # [x] Inserir Dados na planilha google
 # [x] Chamar No Whatsapp. Criar link com o numero e mensagem personalizada abre o whatsapp web e envia a mensagem.
 
-from arquivoExcel import getDadosZip
+from arquivoExcel import getDadosFromFile
 from assertiva import getProcessosComTelefone
 from config import getConfig
 from googleSheets import insert_processos_on_sheet
@@ -46,24 +46,30 @@ def main():
         return
     ''' #NÃO APAGA O CODIGO, POIS PODE SERR RESTAURADO SE FOR UTILIZAR O ROBÔ FULL AUTOMATICO
 
+    #TODO: Salvar informações na planilha do google separada da viviane e luana com status 'aguardando envio whats'
+    #TODO: Separar envio de whats em outra execução que seleciona ou a planilha viviane ou a luana com status 'aguardando envio whats' e grava status 'enviado whats' ou 'erro' na planilha
+    #TODO: Fazer testes com dados atualizados
+    #TODO: Correções de bugs
+    #TODO: 
+
     Tk().withdraw()
-    messagebox.showinfo('Selecione o arquivo zip de remessa do dia', 'Selecione o arquivo zip de remessa do dia')
-    attachment_filename = filedialog.askopenfilename(defaultextension='.zip', filetypes=[('Arquivo zip', '*.zip')])
+    messagebox.showinfo('Selecione o arquivo xlsx da remessa do dia', 'Selecione o arquivo xlsx da remessa do dia')
+    attachment_filename = filedialog.askopenfilename(defaultextension='.xlsx', filetypes=[('Arquivo Excel', '*.xlsx')])
 
     if not attachment_filename:
-        messagebox.showerror('Arquivo zip não selecionado', 'Arquivo zip não selecionado')
+        messagebox.showerror('Arquivo excel não selecionado', 'Arquivo excel não selecionado')
         return
 
-    isZip = attachment_filename.endswith('.zip')
-    if not isZip:
-        messagebox.showerror('Arquivo zip não selecionado', 'Arquivo zip não selecionado')
+    isXlsx = attachment_filename.endswith('.xlsx')
+    if not isXlsx:
+        messagebox.showerror('Arquivo excel não selecionado', 'Arquivo excel não selecionado')
         return
     
     
-    TJSP, TJRS, TJMT = getDadosZip(config, attachment_filename)
+    TJSP, TJRS, TJMT = getDadosFromFile(config, attachment_filename)
 
-    processosTJRS = get_dados_processos_tjrs(config, TJRS) if len(TJRS) > 0 else pd.DataFrame()
     processosTJMT = get_dados_processos_tjmt(config, TJMT) if len(TJMT) > 0 else pd.DataFrame()
+    processosTJRS = get_dados_processos_tjrs(config, TJRS) if len(TJRS) > 0 else pd.DataFrame()
     processosTJSP = get_dados_processos_tjsp(config, TJSP) if len(TJSP) > 0 else pd.DataFrame()
 
     processos = pd.concat([processosTJSP, processosTJRS, processosTJMT], ignore_index=True)

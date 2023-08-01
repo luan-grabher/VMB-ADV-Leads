@@ -8,32 +8,24 @@ def extract_zip(zip_filename, extract_to):
     with zipfile.ZipFile(zip_filename, 'r') as zip_ref:
         zip_ref.extractall(extract_to)
 
-def getDadosZip(config, zip_filename):    
-    zipFileDir = os.path.dirname(zip_filename)
-    extract_zip(zip_filename, zipFileDir)
-
+def getDadosFromFile(config, filefullpath):
+    '''
     excel_name_filter = config['excel']['name']
     contains = excel_name_filter['contains'].split('%') if 'contains' in excel_name_filter else None
     notContains = excel_name_filter['notContains'].split('%') if 'notContains' in excel_name_filter else None
 
-    excel_file = None
-    for file in os.listdir(zipFileDir):
-        if file.endswith(".xlsx"):
-            if contains:
-                for contain in contains:
-                    if contain not in file:
-                        continue
-            if notContains:
-                for notContain in notContains:
-                    if notContain in file:
-                        continue
-
-            excel_file = os.path.join(zipFileDir, file)
-            break
-
-    if not excel_file:
-        print(f"Arquivo .xlsx não encontrado no arquivo zip '{zip_filename}'.")
-        return None
+    filename = os.path.basename(filefullpath)
+    if contains:
+        for contain in contains:
+            if contain not in filename:
+                return None
+    if notContains:
+        for notContain in notContains:
+            if notContain in filename:
+                return None
+    '''
+        
+    excel_file = filefullpath
     
     columns = config['excel']['columns']
     dados = pd.read_excel(excel_file, engine='openpyxl', usecols=columns, na_filter=True)
@@ -95,7 +87,7 @@ def getDadosZip(config, zip_filename):
 if __name__ == "__main__":
     config = getConfig()
 
-    arquivoTeste = './tmp/arquivo.zip'
+    arquivoTeste = './tmp/arquivo.xlsx'
     print(
-        getDadosZip(config, arquivoTeste)
+        getDadosFromFile(config, arquivoTeste)
     )

@@ -58,6 +58,7 @@ def insert_processos_on_sheet(config, processos):
     colunaTribunal = 7
     colunaDocumento = 8
     colunaValor = 9
+    colunaStatus = 10
     colunaTelefone1 = 12
     colunaTelefone2 = 13
     colunaTelefone3 = 14
@@ -82,6 +83,7 @@ def insert_processos_on_sheet(config, processos):
         row[colunaTribunal] = processo['Tribunal']
         row[colunaDocumento] = processo['Documento']
         row[colunaValor] = processo['Valor']
+        row[colunaStatus] = 'Aguardando whats'
 
         telefones = json.loads(processo['Telefone']) if processo['Telefone'] != None else []
         row[colunaTelefone1] = telefones[0] if len(telefones) > 0 else None
