@@ -1,6 +1,6 @@
 
 import re
-from arquivoExcel import getDadosZip
+from arquivoExcel import getDadosFromFile
 from config import getConfig
 from chromedriver_autoinstaller import install
 from selenium import webdriver
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     config = getConfig()
 
     arquivoTeste = './tmp/arquivo.zip'
-    TJSP, TJRS, TJMT = getDadosZip(config, arquivoTeste)
+    TJSP, TJRS, TJMT = getDadosFromFile(config, arquivoTeste)
 
     dados_processos = get_dados_processos_tjsp(config, TJSP)
     dados_processos.to_json('./tmp/dados_processos.json', orient='records', indent=4)

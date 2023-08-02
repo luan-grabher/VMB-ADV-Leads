@@ -74,67 +74,74 @@ def aceitarCookies(driver, configCookies):
 
 
 def getTelefone(driver, configAssertiva, processo):
-    documento = processo['Documento']
-    isCpf = re.search(regexCpf, documento) is not None
-    tipoDocumento = 'cpf' if isCpf else 'cnpj'
+    try:
+        documento = processo['Documento']
+        if not documento or documento == '':
+            return None
 
-    consultaConfig = configAssertiva['urls']['consulta']
-    url = consultaConfig['url']
-    urlConsultaNormalized = url.format(tipoDocumento = tipoDocumento)
+        isCpf = re.search(regexCpf, documento) is not None
+        tipoDocumento = 'cpf' if isCpf else 'cnpj'
 
-    driver.get(urlConsultaNormalized)
+        consultaConfig = configAssertiva['urls']['consulta']
+        url = consultaConfig['url']
+        urlConsultaNormalized = url.format(tipoDocumento = tipoDocumento)
 
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['btnFinalidadeDeUso']))
-    ).click()
+        driver.get(urlConsultaNormalized)
 
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['finalidadeDeUsoConfirmacaoDeIdentidade']))
-    ).click()
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['btnFinalidadeDeUso']))
+        ).click()
 
-    driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['inputDocumento']).send_keys(documento)
-    driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['btnConsultarDoc']).click()
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['finalidadeDeUsoConfirmacaoDeIdentidade']))
+        ).click()
 
-    tituloTelefones = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['tituloTelefones']))
-    )
+        driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['inputDocumento']).send_keys(documento)
+        driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['btnConsultarDoc']).click()
 
-    aceitarCookies(driver, configAssertiva['cookies'])
+        tituloTelefones = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['tituloTelefones']))
+        )
 
-    divTelefones = None
-    parent = tituloTelefones.find_element(By.XPATH, '..')
-    while divTelefones is None:        
-        hasMuiBoxRootClass = 'MuiBox-root' in parent.get_attribute('class')
-        if hasMuiBoxRootClass:
-            divTelefones = parent
-        else:
-            parent = parent.find_element(By.XPATH, '..')
-        
-    cardsTelefone = divTelefones.find_elements(By.CSS_SELECTOR, consultaConfig['css']['cardTelefone'])
-    cardsComWhatsapp = getCardTelefonesWithWhatsapp(driver, consultaConfig, cardsTelefone)
+        aceitarCookies(driver, configAssertiva['cookies'])
 
-    if len(cardsComWhatsapp) == 0:
-        isbtnMaisTelefonesExists = True
-        while isbtnMaisTelefonesExists:
-            try:
-                driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['btnMaisTelefones']).click()
-                time.sleep(1)
-            except:
-                isbtnMaisTelefonesExists = False
-
+        divTelefones = None
+        parent = tituloTelefones.find_element(By.XPATH, '..')
+        while divTelefones is None:        
+            hasMuiBoxRootClass = 'MuiBox-root' in parent.get_attribute('class')
+            if hasMuiBoxRootClass:
+                divTelefones = parent
+            else:
+                parent = parent.find_element(By.XPATH, '..')
+            
         cardsTelefone = divTelefones.find_elements(By.CSS_SELECTOR, consultaConfig['css']['cardTelefone'])
         cardsComWhatsapp = getCardTelefonesWithWhatsapp(driver, consultaConfig, cardsTelefone)
 
-    if len(cardsComWhatsapp) == 0:
-        return None
+        if len(cardsComWhatsapp) == 0:
+            isbtnMaisTelefonesExists = True
+            while isbtnMaisTelefonesExists:
+                try:
+                    driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['btnMaisTelefones']).click()
+                    time.sleep(1)
+                except:
+                    isbtnMaisTelefonesExists = False
+
+            cardsTelefone = divTelefones.find_elements(By.CSS_SELECTOR, consultaConfig['css']['cardTelefone'])
+            cardsComWhatsapp = getCardTelefonesWithWhatsapp(driver, consultaConfig, cardsTelefone)
+
+        if len(cardsComWhatsapp) == 0:
+            return None
+        
+        telefones = []
+        for card in cardsComWhatsapp:
+            telefone = card.find_element(By.CSS_SELECTOR, consultaConfig['css']['telefone']).text
+            telefones.append(telefone)
+        
+        return json.dumps(telefones)
     
-    telefones = []
-    for card in cardsComWhatsapp:
-        telefone = card.find_element(By.CSS_SELECTOR, consultaConfig['css']['telefone']).text
-        telefones.append(telefone)
-    
-    return json.dumps(telefones)
-    
+    except Exception as e:
+        print('Erro ao buscar telefone do processo: ' + processo + ' - ' + str(e))
+
 def getCardTelefonesWithWhatsapp(driver, consultaConfig, cards):
     cardsComWhatsapp = []
     for card in cards:

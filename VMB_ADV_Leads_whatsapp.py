@@ -6,37 +6,43 @@ from googleSheets import atualizaProcessosFromPlanilha, getProcessosFromPlanilha
 from whatsapp import send_whatsapp_messages_to_processos
 
 def enviarWhatsPlanilhaGoogle(config):
-    whatsapp_config = config['whatsapp']
-    planilhasGoogleDisponiveis = whatsapp_config['planilhasGoogleDisponiveis']
+    try:
+        whatsapp_config = config['whatsapp']
+        planilhasGoogleDisponiveis = whatsapp_config['planilhasGoogleDisponiveis']
 
-    planilhaId = selecionaPlanilha(planilhasGoogleDisponiveis)
-    processosPlanilha  = getProcessosFromPlanilha(config, planilhaId)
+        planilhaId = selecionaPlanilha(planilhasGoogleDisponiveis)
+        processosPlanilha  = getProcessosFromPlanilha(config, planilhaId)
 
-    processos_aguardando_whats = processosPlanilha[processosPlanilha['Status'] == 'Aguardando whats']
+        processos_aguardando_whats = processosPlanilha[processosPlanilha['Status'] == 'Aguardando whats']
 
-    if len(processos_aguardando_whats) == 0:
-        pg.alert('Não há processos aguardando envio de whats')
-        return
-    
-    processos_com_whats_enviados = send_whatsapp_messages_to_processos(config, processos_aguardando_whats)
-    numeros_processos_whats_enviados = [processo['Processo'] for processo in processos_com_whats_enviados]
-    
-    #atualiza status apenas dos processos que foram enviados
-    processosPlanilha.loc[
-        processosPlanilha['Processo'].isin(numeros_processos_whats_enviados),
-        'Status'
-    ] = 'Enviado whats'
+        if len(processos_aguardando_whats) == 0:
+            pg.alert('Não há processos aguardando envio de whats')
+            return
+        
+        processos_com_whats_enviados = send_whatsapp_messages_to_processos(config, processos_aguardando_whats)
+        numeros_processos_whats_enviados = [processo['Processo'] for processo in processos_com_whats_enviados]
+        
+        #atualiza status apenas dos processos que foram enviados
+        processosPlanilha.loc[
+            processosPlanilha['Processo'].isin(numeros_processos_whats_enviados),
+            'Status'
+        ] = 'Enviado whats'
 
 
-    #atualiza planilha
-    atualizaProcessosFromPlanilha(config, planilhaId, processosPlanilha)
+        #atualiza planilha
+        atualizaProcessosFromPlanilha(config, planilhaId, processosPlanilha)
 
-    pg.alert('Whats enviados com sucesso')
+        pg.alert('Whats enviados com sucesso')
+    except Exception as e:
+        pg.alert(str(e))
 
 def selecionaPlanilha(planilhasGoogleDisponiveis):
     options = list(planilhasGoogleDisponiveis.keys())
     
     selected = choicebox("Selecione a planilha", "Planilhas disponíveis", options)
+    if not selected:
+        raise Exception('Nenhuma planilha selecionada, programa encerrado')
+
     planilhaId = planilhasGoogleDisponiveis[selected]
 
     return planilhaId
