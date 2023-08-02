@@ -1,0 +1,9 @@
+chromedriver_autoinstaller==0.4.1
+easygui==0.98.3
+google_api_python_client==2.95.0
+google_auth_oauthlib==1.0.0
+pandas==1.5.3
+protobuf==4.23.4
+PyAutoGUI==0.9.53
+pywhatkit==5.4
+selenium==4.11.2

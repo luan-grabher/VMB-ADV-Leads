@@ -1,13 +1,11 @@
 import json
 import os
 import re
-import pywhatkit
 import pandas as pd
-import webbrowser as web
 import time
 import pyautogui as pg
-from pyautogui import hotkey, press
 from urllib.parse import quote
+from chromedriver_install import install_chromedriver
 from config import getConfig
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -24,6 +22,8 @@ def send_whatsapp_messages_to_processos(config, processos):
 
     options = getBrowserOptions()
     driver  = webdriver.Chrome(options=options)
+    print('path do chromedriver utilizado: ', str(driver.service.path))
+
     loginWhatsapp(driver)    
 
     processos_com_whats_enviados = []
@@ -132,6 +132,7 @@ def sendMessage(driver, telefone, message):
         
 
 if __name__ == "__main__":
+    install_chromedriver()
     config =  getConfig()
 
     nro_processo = '9999999-99.2023.8.26.0100'

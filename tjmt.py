@@ -1,8 +1,8 @@
 
 import re
 from arquivoExcel import getDadosFromFile
+from chromedriver_install import install_chromedriver
 from config import getConfig
-from chromedriver_autoinstaller import install
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,7 +12,7 @@ import time
 
 
 def get_dados_processos_tjmt(config, processos):
-    install()
+    install_chromedriver()
 
     user = config['tjmt']['user']
     password = config['tjmt']['password']

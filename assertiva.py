@@ -3,8 +3,8 @@ import json
 import re
 import time
 import pandas as pd
+from chromedriver_install import install_chromedriver
 from config import getConfig
-from chromedriver_autoinstaller import install
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -14,7 +14,7 @@ regexCnpj = "\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
 regexCpf = "\d{3}\.\d{3}\.\d{3}-\d{2}"
 
 def getProcessosComTelefone(config, processos):
-    install()
+    install_chromedriver()
 
     configAssertiva = config['assertiva']
 

@@ -133,6 +133,7 @@ token_google.json
 PyWhatKit_DB.txt
 tmp/
 seleniumProfile/
+chromedriver.exe
 
 # Spyder project settings
 .spyderproject
