@@ -19,6 +19,20 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 credentialsJson = 'google_sheets_credentials.json'
 tokenJson = 'token_google.json'
 
+colunaDataCadastro = 0    
+colunaDataDistribuicao = 1
+colunaCliente = 3
+colunaSocio = 4
+colunaBanco = 5
+colunaProcesso = 6
+colunaTribunal = 7
+colunaDocumento = 8
+colunaValor = 9
+colunaStatus = 10
+colunaTelefone1 = 12
+colunaTelefone2 = 13
+colunaTelefone3 = 14
+
 
 def get_credentials():
     creds = None
@@ -45,23 +59,8 @@ def insert_processos_on_sheet(config, processos):
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
     
-    
     result = sheet.values().get(spreadsheetId=sheetId, range=sheetName).execute()
     values = result.get('values', [])
-
-    colunaDataCadastro = 0    
-    colunaDataDistribuicao = 1
-    colunaCliente = 3
-    colunaSocio = 4
-    colunaBanco = 5
-    colunaProcesso = 6
-    colunaTribunal = 7
-    colunaDocumento = 8
-    colunaValor = 9
-    colunaStatus = 10
-    colunaTelefone1 = 12
-    colunaTelefone2 = 13
-    colunaTelefone3 = 14
 
     lastEmptyRow = len(values) - 1
     for row in reversed(values):
@@ -98,6 +97,65 @@ def insert_processos_on_sheet(config, processos):
     }
 
     result = sheet.values().update(spreadsheetId=sheetId, range=sheetName + '!A' + str(lastEmptyRow - 1), valueInputOption='USER_ENTERED', body=body).execute()
+
+def getProcessosFromPlanilha(config, planilhaId):
+    sheetName = config['googleSheets']['sheetName']
+
+    processos = pd.DataFrame()
+
+    credentials = get_credentials()
+    service = build('sheets', 'v4', credentials=credentials)
+
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=planilhaId, range=sheetName).execute()
+    values = result.get('values', [])
+    values.pop(0)
+
+    for row in values:
+        processo = dict()
+        processo['Data Distribuicao'] = row[colunaDataDistribuicao] if len(row) > colunaDataDistribuicao else None
+        processo['Cliente'] = row[colunaCliente] if len(row) > colunaCliente else None
+        processo['Socio'] = row[colunaSocio] if len(row) > colunaSocio else None
+        processo['Banco'] = row[colunaBanco] if len(row) > colunaBanco else None
+        processo['Processo'] = row[colunaProcesso] if len(row) > colunaProcesso else None
+        processo['Tribunal'] = row[colunaTribunal] if len(row) > colunaTribunal else None
+        processo['Documento'] = row[colunaDocumento] if len(row) > colunaDocumento else None
+        processo['Valor'] = row[colunaValor] if len(row) > colunaValor else None
+        processo['Status'] = row[colunaStatus] if len(row) > colunaStatus else None
+
+        telefone1 = row[colunaTelefone1] if len(row) > colunaTelefone1 else None
+        telefone2 = row[colunaTelefone2] if len(row) > colunaTelefone2 else None
+        telefone3 = row[colunaTelefone3] if len(row) > colunaTelefone3 else None
+        processo['Telefone'] = json.dumps([telefone1, telefone2, telefone3])
+
+        isProcessoValido = processo['Processo'] != None and processo['Processo'] != ''
+        if isProcessoValido:
+            processos = pd.concat([processos, pd.DataFrame([processo])])
+
+    return processos
+
+def atualizaProcessosFromPlanilha(config, planilhaId, processos):
+    sheetName = config['googleSheets']['sheetName']
+
+    credentials = get_credentials()
+    service = build('sheets', 'v4', credentials=credentials)
+
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=planilhaId, range=sheetName).execute()
+    values = result.get('values', [])
+
+    #para cada processo, atualiza o status
+    for index, processo in processos.iterrows():
+        for row in values:
+            if len(row) > colunaProcesso and row[colunaProcesso] == processo['Processo']:
+                row[colunaStatus] = processo['Status']
+                break
+
+    body = {
+        'values': values
+    }
+
+    result = sheet.values().update(spreadsheetId=planilhaId, range=sheetName + '!A1', valueInputOption='USER_ENTERED', body=body).execute()    
 
 if __name__ == '__main__':
     config =  getConfig()
