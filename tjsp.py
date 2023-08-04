@@ -186,6 +186,9 @@ def get_cnpj_ou_cpf(driver, consultaConfig):
     regexCpf = "\d{3}\.\d{3}\.\d{3}-\d{2}"
 
     posicaoPrimeiroCNPJ = re.search(regexCnpj, textoPDF)
+    if not posicaoPrimeiroCNPJ:
+        return None #TODO: REVISAR porque de alguns nao pega
+
     textoAposCnpjBanco = textoPDF[posicaoPrimeiroCNPJ.end():]
 
     primeiroCnpjAposBanco = re.search(regexCnpj, textoAposCnpjBanco)

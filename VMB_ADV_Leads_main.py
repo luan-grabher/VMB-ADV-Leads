@@ -1,3 +1,4 @@
+from easygui import choicebox
 from arquivoExcel import getDadosFromFile
 from assertiva import getProcessosComTelefone
 from config import getConfig
@@ -23,16 +24,24 @@ def main():
         isXlsx = attachment_filename.endswith('.xlsx')
         if not isXlsx:
             messagebox.showerror('Arquivo excel não selecionado', 'Arquivo excel não selecionado')
-            return
-        
+            return     
+
+        tribunalSelecionado = selecionaTribunal()   
         
         TJSP, TJRS, TJMT = getDadosFromFile(config, attachment_filename)
 
-        processosTJMT = get_dados_processos_tjmt(config, TJMT) if len(TJMT) > 0 else pd.DataFrame()
-        processosTJRS = get_dados_processos_tjrs(config, TJRS) if len(TJRS) > 0 else pd.DataFrame()
-        processosTJSP = get_dados_processos_tjsp(config, TJSP) if len(TJSP) > 0 else pd.DataFrame()
+        if tribunalSelecionado == 'TJMT':
+            processos = get_dados_processos_tjmt(config, TJMT) if len(TJMT) > 0 else pd.DataFrame()
 
-        processos = pd.concat([processosTJSP, processosTJRS, processosTJMT], ignore_index=True)
+        if tribunalSelecionado == 'TJRS':
+            processos = get_dados_processos_tjrs(config, TJRS) if len(TJRS) > 0 else pd.DataFrame()
+        
+        if tribunalSelecionado == 'TJSP':
+            processos = get_dados_processos_tjsp(config, TJSP) if len(TJSP) > 0 else pd.DataFrame()
+
+        if len(processos) == 0:
+            messagebox.showerror('Nenhum processo encontrado', 'Nenhum processo encontrado')
+            return
 
         processos_com_telefone = getProcessosComTelefone(config, processos)
         
@@ -41,6 +50,15 @@ def main():
         messagebox.showinfo('Processos inseridos na planilha', 'Processos inseridos na planilha, execução finalizada')
     except Exception as e:
         messagebox.showerror('Erro', str(e))
+
+def selecionaTribunal():
+    options = list('TJSP', 'TJRS', 'TJMT')
+    
+    selected = choicebox("Selecione o tribunal", "Tribunais disponíveis", options)
+    if not selected:
+        raise Exception('Nenhum tribunal selecionado, programa encerrado')
+
+    return selected
 
 if __name__ == "__main__":
     main()

@@ -140,7 +140,7 @@ def getTelefone(driver, configAssertiva, processo):
         return json.dumps(telefones)
     
     except Exception as e:
-        print('Erro ao buscar telefone do processo: ' + processo + ' - ' + str(e))
+        print('Erro ao buscar telefone do processo: ' + str(processo) + ' - ' + str(e))
 
 def getCardTelefonesWithWhatsapp(driver, consultaConfig, cards):
     cardsComWhatsapp = []

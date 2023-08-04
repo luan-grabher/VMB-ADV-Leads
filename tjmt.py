@@ -82,6 +82,7 @@ def login(driver, loginConfig, user, password):
     except:
         driver.find_element(By.CSS_SELECTOR, loginConfig['css']['btnEntrar']).click()
 
+    time.sleep(5) #TODO: Esperar o login ser feito com sucesso
 
 def acessar_detalhes_processo(driver, consultaConfig, processo):
     driver.get(consultaConfig['url'])
