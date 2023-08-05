@@ -11,6 +11,7 @@ import pandas as pd
 import time
 from googleSheets import getProcessosFromPlanilha, insert_processos_on_sheet
 
+#TODO: não esta separando por socio e cliente, esta salvando sempre em socio
 
 def get_dados_processos_tjrs(config, processos):
     install_chromedriver()

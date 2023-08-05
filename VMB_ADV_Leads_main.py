@@ -9,7 +9,7 @@ import pandas as pd
 from tkinter import Tk, filedialog, messagebox
 
 def main():
-    #try:
+    try:
         config = getConfig()
         processos = pd.DataFrame()
 
@@ -47,8 +47,8 @@ def main():
         putTelefonesOnProcessos(config)
 
         messagebox.showinfo('Processos inseridos na planilha', 'Processos inseridos na planilha, execução finalizada')
-    #except Exception as e:
-    #    messagebox.showerror('Erro', str(e))
+    except Exception as e:
+        messagebox.showerror('Erro', str(e))
 
 def selecionaTribunal():
     options = list(['TJMT', 'TJRS', 'TJSP', 'SOMENTE COMPLETAR TELEFONES'])

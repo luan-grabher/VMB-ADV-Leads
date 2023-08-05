@@ -12,10 +12,6 @@ import time
 
 from googleSheets import getProcessosFromPlanilha, insert_processos_on_sheet
 
-#TODO: Alguns processos o nome do socio/cliente esta ficando com o cpf ou cnpj.
-#TODO: Alguns processos estao ficando sem cpf ou cnpj.
-
-
 def get_dados_processos_tjmt(config, processos):
     install_chromedriver()
 
@@ -54,29 +50,28 @@ def get_dados_processos_tjmt(config, processos):
             if not hasAdvogado(driver, consultaConfig):
 
                 banco, cliente, socio, cnpj, cpf = get_partes(driver, consultaConfig)
-                if socio != None and socio != '':
 
-                    data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
-                    documento = cnpj if cnpj != None and cnpj != '' else cpf
+                data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
+                documento = cnpj if cnpj != None and cnpj != '' else cpf
 
-                    processo = {
-                            'Data Distribuicao': [data_hora_distribuicao],
-                            'Processo': [processo['Processo']],
-                            'Valor': [valorAcaoProcesso],
-                            'Cliente': [cliente],
-                            'Socio': [socio],
-                            'Documento': [documento],
-                            'Banco': [banco],
-                            'Tribunal' : ['TJMT'],
-                            'Status': ['Aguardando telefones']
-                    }
+                processo = {
+                        'Data Distribuicao': [data_hora_distribuicao],
+                        'Processo': [processo['Processo']],
+                        'Valor': [valorAcaoProcesso],
+                        'Cliente': [cliente],
+                        'Socio': [socio],
+                        'Documento': [documento],
+                        'Banco': [banco],
+                        'Tribunal' : ['TJMT'],
+                        'Status': ['Aguardando telefones']
+                }
 
-                    insert_processos_on_sheet(config, pd.DataFrame(processo))
+                insert_processos_on_sheet(config, pd.DataFrame(processo))
 
-                    dados_processos = pd.concat([
-                        dados_processos,
-                        pd.DataFrame(processo)
-                    ])
+                dados_processos = pd.concat([
+                    dados_processos,
+                    pd.DataFrame(processo)
+                ])
 
     driver.quit()
 
@@ -106,7 +101,7 @@ def login(driver, loginConfig, user, password, retry=True):
 
     try:
         selector_wait_login = ".nome-sobrenome"
-        WebDriverWait(driver, 60).until(
+        WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, selector_wait_login))
         )
     except:
@@ -174,53 +169,69 @@ def hasAdvogado(driver, consultaConfig):
     return False
 
 def get_partes(driver, consultaConfig):
-    poloPassivo = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['poloPassivo'])
+    try:
+        poloPassivo = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['poloPassivo'])
 
-    reuBoxHtml = poloPassivo.get_attribute('innerHTML')
-    hasAdvogado = re.search(r'advogado', reuBoxHtml.lower())
-    if hasAdvogado != None:
-        return '', '', ''
+        reuBoxHtml = poloPassivo.get_attribute('innerHTML')
+        hasAdvogado = re.search(r'advogado', reuBoxHtml.lower())
+        if hasAdvogado != None:
+            return '', '', '', '', ''
 
-    poloAtivo = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['poloAtivo']).text
-    poloAtivo = poloAtivo.replace('\n', ' ')
-    poloAtivo = poloAtivo.split('Polo ativo')[1].strip()
-    nomeBanco = poloAtivo.split('- CNPJ')[0].strip()
+        poloAtivo = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['poloAtivo']).text
+        poloAtivo = poloAtivo.replace('\n', ' ')
+        poloAtivo = poloAtivo.split('Polo ativo')[1].strip()
+        nomeBanco = poloAtivo.split('- CNPJ')[0].strip()
 
-    regexCnpj = "\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
-    regexCpf = "\d{3}\.\d{3}\.\d{3}-\d{2}"
+        regexCnpj = "\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
+        regexCpf = "\d{3}\.\d{3}\.\d{3}-\d{2}"
 
-    poloPassivoText = poloPassivo.text
-    poloPassivoText = poloPassivoText.replace('\n', ' ')
-    poloPassivoText = poloPassivoText.split('Polo passivo')[1].strip()
-    poloPassivoSplit = poloPassivoText.split(')')
-    poloPassivoSplit = list(filter(None, poloPassivoSplit))
+        poloPassivoText = poloPassivo.text
+        poloPassivoText = poloPassivoText.replace('\n', ' ')
+        poloPassivoText = poloPassivoText.split('Polo passivo')[1].strip()
+        poloPassivoSplit = poloPassivoText.split(')')
+        poloPassivoSplit = list(filter(None, poloPassivoSplit))
+        if len(poloPassivoSplit) == 0:
+            return '', '', '', '', ''
 
-    cliente = ''
-    socio = ''
-    cnpj = ''
-    cpf = ''
+        cliente = ''
+        socio = ''
+        cnpj = ''
+        cpf = ''
 
-    if len(poloPassivoSplit) > 1:
         for parte in poloPassivoSplit:
-            isCnpj = re.search(regexCnpj, parte)
-            if isCnpj != None and cnpj == '':
-                cnpj = isCnpj.group(0)
-                cliente = parte.split('- CNPJ')[0].strip()
+            parte = parte.split('(') if '(' in parte else parte
+            parte = parte[0] if type(parte) == list else parte
+            parte = parte.split('-', 1) if '-' in parte else parte
+            if len(parte) < 2:
+                continue
+
+            nome, documento = parte[0].strip(), parte[1].strip()
             
-            isCpf = re.search(regexCpf, parte)
-            if isCpf != None and cpf == '':
-                cpf = isCpf.group(0)
-                socio = parte.split('- CPF')[0].strip()
+            nome = nome.strip()
+
+            documento = documento.split(':') if ':' in documento else documento
+            documento = documento[1] if type(documento) == list else documento
+            documento = documento.strip()
+
+            isCPF = re.search(regexCpf, documento)
+            isCNPJ = re.search(regexCnpj, documento)
+
+            if isCPF != None and cpf == '':
+                cpf = documento
+                socio = nome
+
+            if isCNPJ != None and cnpj == '':
+                cnpj = documento
+                cliente = nome
 
             if cnpj != '' and cpf != '':
                 break
-    else:
-        cliente = ''
-        socio = poloPassivoSplit[0].strip()
-        cpf = re.search(regexCpf, poloPassivoSplit[0])
-        cpf = cpf.group(0) if cpf != None else ''
+        
+        return nomeBanco, cliente, socio, cnpj, cpf
     
-    return nomeBanco, cliente, socio, cnpj, cpf
+    except Exception as e:
+        print(e)
+        return '', '', '', '', ''
 
 mesesAbreviados = {
     'jan': '01',
