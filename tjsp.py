@@ -10,6 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 import pandas as pd
 import time
 
+from googleSheets import getProcessosFromPlanilha, insert_processos_on_sheet
+
 
 def get_dados_processos_tjsp(config, processos):
     install_chromedriver()
@@ -19,6 +21,9 @@ def get_dados_processos_tjsp(config, processos):
     urls = config['tjsp']['urls']
     valorMinimo = float(config['valorMinimo'])
 
+    sheetId  = config['googleSheets']['sheetId']
+    processos_planilha = getProcessosFromPlanilha(config, sheetId)
+
     driver = webdriver.Chrome()
 
     login(driver, urls['login'], user, password)
@@ -27,6 +32,15 @@ def get_dados_processos_tjsp(config, processos):
 
     dados_processos = pd.DataFrame()
     for index, processo in processos.iterrows():
+        isProcessoExistsOnPlanilha = processos_planilha['Processo'].str.contains(processo['Processo']).any() if not processos_planilha.empty else False
+        if isProcessoExistsOnPlanilha:
+            dados_processos = pd.concat([dados_processos, processos_planilha[processos_planilha['Processo'].str.contains(processo['Processo'])]])
+            continue
+
+        isProcessoExistsOnDadosProcessos = dados_processos['Processo'].str.contains(processo['Processo']).any() if not dados_processos.empty else False
+        if isProcessoExistsOnDadosProcessos:
+            continue
+
         acessar_detalhes_processo(driver, consultaConfig, processo)
 
         valorAcaoProcesso = get_valor_acao_processo(
@@ -38,18 +52,22 @@ def get_dados_processos_tjsp(config, processos):
                 data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
                 documento = get_cnpj_ou_cpf(driver, consultaConfig)
 
+                processo = pd.DataFrame({
+                    'Data Distribuicao': [data_hora_distribuicao],
+                    'Processo': [processo['Processo']],
+                    'Valor': [valorAcaoProcesso],
+                    'Cliente': [cliente],
+                    'Socio': [socio],
+                    'Documento': [documento],
+                    'Banco': [banco],
+                    'Tribunal' : ['TJSP']
+                })
+
+                insert_processos_on_sheet(config, processo)
+
                 dados_processos = pd.concat([
                     dados_processos,
-                    pd.DataFrame({
-                        'Data Distribuicao': [data_hora_distribuicao],
-                        'Processo': [processo['Processo']],
-                        'Valor': [valorAcaoProcesso],
-                        'Cliente': [cliente],
-                        'Socio': [socio],
-                        'Documento': [documento],
-                        'Banco': [banco],
-                        'Tribunal' : ['TJSP']
-                    })
+                    processo
                 ])
 
     driver.quit()
@@ -106,7 +124,7 @@ def get_partes(driver, consultaConfig):
         pass
 
     if btnTodasPartes:
-        btnTodasPartes.click()
+        driver.execute_script("arguments[0].click();", btnTodasPartes)
     else:
         partes_css = consultaConfig['css']['partesPrincipais']
 
@@ -141,14 +159,14 @@ def get_data_hora_distribuicao(driver, consultaConfig):
 def get_cnpj_ou_cpf(driver, consultaConfig):
     btnVisualizarAutos = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['btnVisualizarAutos'])
     driver.execute_script("arguments[0].removeAttribute('target')", btnVisualizarAutos)
-    btnVisualizarAutos.click()
+    driver.execute_script("arguments[0].click();", btnVisualizarAutos)
 
     btnPrimeiraPagina = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, consultaConfig['css']['btnPrimeiraPagina']))
     )
-    btnPrimeiraPagina.click()
+    driver.execute_script("arguments[0].click();", btnPrimeiraPagina)
     time.sleep(1)
-    btnPrimeiraPagina.click() #as vezes buga, entao clica duas vezes p
+    driver.execute_script("arguments[0].click();", btnPrimeiraPagina) #as vezes buga, entao clica duas vezes p
     time.sleep(1)
 
     iframePdf = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['iframePdf'])
@@ -215,4 +233,3 @@ if __name__ == "__main__":
     TJSP, TJRS, TJMT = getDadosFromFile(config, arquivoTeste)
 
     dados_processos = get_dados_processos_tjsp(config, TJSP)
-    dados_processos.to_json('./tmp/dados_processos.json', orient='records', indent=4)
