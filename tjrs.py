@@ -11,7 +11,8 @@ import pandas as pd
 import time
 from googleSheets import getProcessosFromPlanilha, insert_processos_on_sheet
 
-#TODO: não esta separando por socio e cliente, esta salvando sempre em socio
+regexCnpj = "\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
+regexCpf = "\d{3}\.\d{3}\.\d{3}-\d{2}"
 
 def get_dados_processos_tjrs(config, processos):
     install_chromedriver()
@@ -49,18 +50,21 @@ def get_dados_processos_tjrs(config, processos):
             driver, consultaConfig)
         if valorAcaoProcesso >= valorMinimo:
 
-            banco, cliente, socio = get_partes(driver, consultaConfig)
-            if socio != None and socio != '':
+            banco, nome = get_partes(driver, consultaConfig)
+            if nome != None and nome != '':
 
                 data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
                 documento = get_cnpj_ou_cpf(driver, consultaConfig)
+
+                isCPF = re.search(regexCpf, documento)
+                isCNPJ = re.search(regexCnpj, documento)
 
                 processo = pd.DataFrame({
                     'Data Distribuicao': [data_hora_distribuicao],
                     'Processo': [processo['Processo']],
                     'Valor': [valorAcaoProcesso],
-                    'Cliente': [cliente],
-                    'Socio': [socio],
+                    'Cliente': [nome if isCNPJ else None],
+                    'Socio': [nome if isCPF else None],
                     'Documento': [documento],
                     'Banco': [banco],
                     'Tribunal' : ['TJRS']
@@ -123,17 +127,17 @@ def get_partes(driver, consultaConfig):
     reuBoxHtml = reuBox.get_attribute('innerHTML')
     hasAdvogado = re.search(r'advogado', reuBoxHtml.lower())
     if hasAdvogado != None:
-        return '', '', ''
+        return '', ''
 
     try:
         nomeBanco = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeBanco']).text
-        nomeSocio = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeSocio']).text
+        nome = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['nomeSocio']).text
 
-        return nomeBanco, None, nomeSocio
+        return nomeBanco, nome
     except:
         pass
     
-    return '', '', ''
+    return '', ''
 
 def get_data_hora_distribuicao(driver, consultaConfig):
     data_hora_distribuicao = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['dataHoraDistribuicaoProcesso'])
