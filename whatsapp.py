@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from easygui import choicebox
 import pandas as pd
 import time
 import pyautogui as pg
@@ -12,10 +13,18 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from googleSheets import atualizaProcessosFromPlanilha, getProcessosFromPlanilha
+
 cookies_whatsapp = 'cookies_whatsapp.json'
 
-def send_whatsapp_messages_to_processos(config, processos):
+def send_whatsapp_messages_to_processos(config, planilha_id):
     whatsappConfig =   config['whatsapp']
+
+    processosPlanilha  = getProcessosFromPlanilha(config, planilha_id)
+    processos_aguardando_whats = processosPlanilha[processosPlanilha['Status'] == 'Aguardando whats']
+
+    if len(processos_aguardando_whats) == 0:
+        raise Exception('Não há processos aguardando envio de whats')
 
     messageTemplatePath = "whatsappMensagemTemplate.txt"
     messageTemplate = open(messageTemplatePath, 'r', encoding='utf-8').read()
@@ -26,10 +35,13 @@ def send_whatsapp_messages_to_processos(config, processos):
 
     loginWhatsapp(driver)    
 
-    processos_com_whats_enviados = []
-    for index, processo in processos.iterrows():
-        socio = processo['Socio']
-        cliente = processo['Cliente']
+    for index, processo in processos_aguardando_whats.iterrows():
+        socio = processo['Socio'] if 'Socio' in processo else ''
+        cliente = processo['Cliente'] if 'Cliente' in processo else ''
+        
+        if not cliente and not socio:
+            continue
+
         message = messageTemplate.format(nome=cliente if cliente else socio, assinatura = whatsappConfig['assinatura']) 
 
         if processo['Telefone'] is None:
@@ -46,20 +58,16 @@ def send_whatsapp_messages_to_processos(config, processos):
 
             sendMessage(driver, telefone, message)
 
-            processos_com_whats_enviados.append(processo)
-        
-        processos_com_whats_enviados = pd.DataFrame(processos_com_whats_enviados)
-        processos_com_whats_enviados.drop_duplicates(subset=['Processo'], inplace=True)
-        processos_com_whats_enviados = processos_com_whats_enviados.to_dict('records')
+            processo['Status'] = 'Enviado whats'
+            atualizaProcessosFromPlanilha(config, planilha_id, pd.DataFrame([processo]))
 
 
     driver.quit()
-    return processos_com_whats_enviados
 
 def loginWhatsapp(driver):
     try:
         driver.get("https://web.whatsapp.com/")
-        time.sleep(5)
+        time.sleep(10)
 
         selectorQrCode = "div[data-testid='qrcode']"
         selectorSide = "#side"
@@ -73,7 +81,7 @@ def loginWhatsapp(driver):
             except:            
                 hasQrCode = False
 
-        WebDriverWait(driver, 20).until(
+        WebDriverWait(driver, 60).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, selectorSide))
         )
     except Exception as e:
@@ -129,7 +137,6 @@ def sendMessage(driver, telefone, message):
 
         if totalMessages == totalMessagesSuccess:
             isMessageCorrectlySent = True
-        
 
 if __name__ == "__main__":
     install_chromedriver()
