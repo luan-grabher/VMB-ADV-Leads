@@ -12,6 +12,9 @@ import time
 
 from googleSheets import getProcessosFromPlanilha, insert_processos_on_sheet
 
+#TODO: Alguns processos o nome do socio/cliente esta ficando com o cpf ou cnpj.
+#TODO: Alguns processos estao ficando sem cpf ou cnpj.
+
 
 def get_dados_processos_tjmt(config, processos):
     install_chromedriver()
