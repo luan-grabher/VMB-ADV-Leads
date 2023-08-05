@@ -10,6 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 import pandas as pd
 import time
 
+from googleSheets import getProcessosFromPlanilha, insert_processos_on_sheet
+
 
 def get_dados_processos_tjmt(config, processos):
     install_chromedriver()
@@ -18,6 +20,9 @@ def get_dados_processos_tjmt(config, processos):
     password = config['tjmt']['password']
     urls = config['tjmt']['urls']
     valorMinimo = float(config['valorMinimo'])
+
+    sheetId  = config['googleSheets']['sheetId']
+    processos_planilha = getProcessosFromPlanilha(config, sheetId)
 
     driver = webdriver.Chrome()
     driver.set_window_size(1050, 1000)
@@ -28,6 +33,15 @@ def get_dados_processos_tjmt(config, processos):
 
     dados_processos = pd.DataFrame()
     for index, processo in processos.iterrows():
+        isProcessoExistsOnPlanilha = processos_planilha['Processo'].str.contains(processo['Processo']).any() if not processos_planilha.empty else False
+        if isProcessoExistsOnPlanilha:
+            dados_processos = pd.concat([dados_processos, processos_planilha[processos_planilha['Processo'].str.contains(processo['Processo'])]])
+            continue
+
+        isProcessoExistsOnDadosProcessos = dados_processos['Processo'].str.contains(processo['Processo']).any() if not dados_processos.empty else False
+        if isProcessoExistsOnDadosProcessos:
+            continue
+
         acessar_detalhes_processo(driver, consultaConfig, processo)
 
         valorAcaoProcesso = get_valor_acao_processo(
@@ -42,9 +56,7 @@ def get_dados_processos_tjmt(config, processos):
                     data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
                     documento = cnpj if cnpj != None and cnpj != '' else cpf
 
-                    dados_processos = pd.concat([
-                        dados_processos,
-                        pd.DataFrame({
+                    processo = {
                             'Data Distribuicao': [data_hora_distribuicao],
                             'Processo': [processo['Processo']],
                             'Valor': [valorAcaoProcesso],
@@ -52,8 +64,15 @@ def get_dados_processos_tjmt(config, processos):
                             'Socio': [socio],
                             'Documento': [documento],
                             'Banco': [banco],
-                            'Tribunal' : ['TJMT']
-                        })
+                            'Tribunal' : ['TJMT'],
+                            'Status': ['Aguardando telefones']
+                    }
+
+                    insert_processos_on_sheet(config, pd.DataFrame(processo))
+
+                    dados_processos = pd.concat([
+                        dados_processos,
+                        pd.DataFrame(processo)
                     ])
 
     driver.quit()
@@ -61,7 +80,7 @@ def get_dados_processos_tjmt(config, processos):
     return dados_processos
 
 
-def login(driver, loginConfig, user, password):
+def login(driver, loginConfig, user, password, retry=True):
     driver.get(loginConfig['url'])
 
     try:
@@ -82,7 +101,16 @@ def login(driver, loginConfig, user, password):
     except:
         driver.find_element(By.CSS_SELECTOR, loginConfig['css']['btnEntrar']).click()
 
-    time.sleep(5) #TODO: Esperar o login ser feito com sucesso
+    try:
+        selector_wait_login = ".nome-sobrenome"
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, selector_wait_login))
+        )
+    except:
+        if retry:
+            login(driver, loginConfig, user, password, False)
+        else:
+            raise Exception('Não foi possível fazer login')
 
 def acessar_detalhes_processo(driver, consultaConfig, processo):
     driver.get(consultaConfig['url'])

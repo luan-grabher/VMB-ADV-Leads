@@ -40,7 +40,11 @@ def get_credentials():
         creds = Credentials.from_authorized_user_file(tokenJson, SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                os.remove(tokenJson)
+                return get_credentials()
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
                 credentialsJson, SCOPES)
@@ -68,26 +72,30 @@ def insert_processos_on_sheet(config, processos):
             break            
 
         lastEmptyRow -= 1
+    
+    firstEmptyRow = lastEmptyRow + 2 # 2 beacause the real first empty row is the next one to insert it
 
     dataCadastro = time.strftime("%d/%m/%Y")
     insertedValues = list()
     for index, processo in processos.iterrows():
         row = [None] * 15
         row[colunaDataCadastro] = dataCadastro
-        row[colunaDataDistribuicao] = processo['Data Distribuicao']
-        row[colunaCliente] = processo['Cliente']
-        row[colunaSocio] = processo['Socio']
-        row[colunaBanco] = processo['Banco']
-        row[colunaProcesso] = processo['Processo']
-        row[colunaTribunal] = processo['Tribunal']
-        row[colunaDocumento] = processo['Documento']
-        row[colunaValor] = processo['Valor']
-        row[colunaStatus] = 'Aguardando whats'
+        row[colunaDataDistribuicao] = processo['Data Distribuicao'] if 'Data Distribuicao' in processo else None
+        row[colunaCliente] = processo['Cliente'] if 'Cliente' in processo else None
+        row[colunaSocio] = processo['Socio'] if 'Socio' in processo else None
+        row[colunaBanco] = processo['Banco'] if 'Banco' in processo else None
+        row[colunaProcesso] = processo['Processo'] if 'Processo' in processo else None
+        row[colunaTribunal] = processo['Tribunal'] if 'Tribunal' in processo else None
+        row[colunaDocumento] = processo['Documento'] if 'Documento' in processo else None
+        row[colunaValor] = processo['Valor'] if 'Valor' in processo else None
+        row[colunaStatus] = processo['Status'] if 'Status' in processo else 'Aguardando telefones'
 
-        telefones = json.loads(processo['Telefone']) if processo['Telefone'] != None else []
-        row[colunaTelefone1] = telefones[0] if len(telefones) > 0 else None
-        row[colunaTelefone2] = telefones[1] if len(telefones) > 1 else None
-        row[colunaTelefone3] = telefones[2] if len(telefones) > 2 else None
+        telefones_processo  = processo['Telefone'] if 'Telefone' in processo else None
+        telefones = json.loads(telefones_processo) if telefones_processo != None else None
+        lenTelefones = len(telefones) if telefones != None and type(telefones) is list else 0
+        row[colunaTelefone1] = telefones[0] if lenTelefones > 0 else None
+        row[colunaTelefone2] = telefones[1] if lenTelefones > 1 else None
+        row[colunaTelefone3] = telefones[2] if lenTelefones > 2 else None
 
         insertedValues.append(row)
         lastEmptyRow += 1
@@ -96,7 +104,7 @@ def insert_processos_on_sheet(config, processos):
         'values': insertedValues
     }
 
-    result = sheet.values().update(spreadsheetId=sheetId, range=sheetName + '!A' + str(lastEmptyRow - 1), valueInputOption='USER_ENTERED', body=body).execute()
+    result = sheet.values().update(spreadsheetId=sheetId, range=sheetName + '!A' + str(firstEmptyRow), valueInputOption='USER_ENTERED', body=body).execute()
 
 def getProcessosFromPlanilha(config, planilhaId):
     sheetName = config['googleSheets']['sheetName']
@@ -148,7 +156,18 @@ def atualizaProcessosFromPlanilha(config, planilhaId, processos):
     for index, processo in processos.iterrows():
         for row in values:
             if len(row) > colunaProcesso and row[colunaProcesso] == processo['Processo']:
-                row[colunaStatus] = processo['Status']
+                #add columns if not exists
+                while len(row) < colunaTelefone3 + 1:
+                    row.append(None)
+
+                row[colunaStatus] = processo['Status'] if 'Status' in processo else None
+
+                telefones = json.loads(processo['Telefone']) if 'Telefone' in processo else None
+                lenTelefones = len(telefones) if telefones != None and type(telefones) is list else 0
+                row[colunaTelefone1] = telefones[0] if lenTelefones > 0 else None
+                row[colunaTelefone2] = telefones[1] if lenTelefones > 1 else None
+                row[colunaTelefone3] = telefones[2] if lenTelefones > 2 else None                
+
                 break
 
     body = {

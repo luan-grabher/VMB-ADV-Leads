@@ -10,10 +10,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from googleSheets import atualizaProcessosFromPlanilha, getProcessosFromPlanilha, insert_processos_on_sheet
+
 regexCnpj = "\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
 regexCpf = "\d{3}\.\d{3}\.\d{3}-\d{2}"
 
-def getProcessosComTelefone(config, processos):
+def putTelefonesOnProcessos(config):
+    planilhaId = config['googleSheets']['sheetId']
+    processos = getProcessosFromPlanilha(config, planilhaId)
+    processosAguardandoTelefones = processos[processos['Status'] == 'Aguardando telefones']
+
     install_chromedriver()
 
     configAssertiva = config['assertiva']
@@ -25,11 +31,13 @@ def getProcessosComTelefone(config, processos):
 
     processos['Telefone'] = None
 
-    for index, processo in processos.iterrows():
+    for index, processo in processosAguardandoTelefones.iterrows():
         telefone = getTelefone(driver, configAssertiva, processo)
 
-        if telefone:
-            processos.at[index, 'Telefone'] = telefone       
+        if telefone != None:
+            processo['Telefone'] = telefone
+            processo['Status'] = 'Aguardando whats' 
+            atualizaProcessosFromPlanilha(config, planilhaId, pd.DataFrame([processo]))
 
         time.sleep(2)     
 
@@ -157,6 +165,4 @@ def getCardTelefonesWithWhatsapp(driver, consultaConfig, cards):
 if __name__ == "__main__":
     config = getConfig()
 
-    processos = pd.read_json('./tmp/dados_processos.json')
-
-    print(getProcessosComTelefone(config, processos))
+    print(putTelefonesOnProcessos(config))
