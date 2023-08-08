@@ -34,7 +34,7 @@ def putTelefonesOnProcessos(config):
     for index, processo in processosAguardandoTelefones.iterrows():
         telefone = getTelefone(driver, configAssertiva, processo)
 
-        if telefone != None:
+        if telefone != None:            
             processo['Telefone'] = telefone
             processo['Status'] = 'Aguardando whats' 
             atualizaProcessosFromPlanilha(config, planilhaId, pd.DataFrame([processo]))

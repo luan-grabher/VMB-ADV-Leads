@@ -55,6 +55,8 @@ def get_dados_processos_tjrs(config, processos):
 
                 data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
                 documento = get_cnpj_ou_cpf(driver, consultaConfig)
+                if documento == None or documento == '':
+                    continue
 
                 isCPF = re.search(regexCpf, documento)
                 isCNPJ = re.search(regexCnpj, documento)
@@ -148,10 +150,13 @@ def get_data_hora_distribuicao(driver, consultaConfig):
     return data_hora_distribuicao
 
 def get_cnpj_ou_cpf(driver, consultaConfig):
-    documentoSocio = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['documentoSocio'])
-    documentoSocio = documentoSocio.text
+    try:
+        documentoSocio = driver.find_element(By.CSS_SELECTOR, consultaConfig['css']['documentoSocio'])
+        documentoSocio = documentoSocio.text
 
-    return documentoSocio
+        return documentoSocio
+    except:
+        return ''
 
 if __name__ == "__main__":
     config = getConfig()

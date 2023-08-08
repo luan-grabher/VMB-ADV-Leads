@@ -12,6 +12,14 @@ import time
 
 from googleSheets import getProcessosFromPlanilha, insert_processos_on_sheet
 
+# 1003300-87.2023.8.26.0505 #TODO:  TESTAR SE REALMENTE ESSE NO TJSP NAO TEM CPF/CNPJ
+'''
+    1027560-91.2023.8.26.0001
+    1105616-35.2023.8.26.0100
+    1008186-26.2023.8.26.0604
+    1023731-23.2023.8.26.0577
+    1035053-71.2023.8.26.0114
+'''
 
 def get_dados_processos_tjsp(config, processos):
     install_chromedriver()

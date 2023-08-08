@@ -111,6 +111,12 @@ def sendMessage(driver, telefone, message):
     selectorSendButtonBlocked = "button[data-testid='ptt-ready-btn']"
     selectorMessages = "div[data-testid='msg-container']"
     selectorMessagesSuccessIcons = "div[data-testid='msg-container'] span[data-testid='msg-dblcheck']"
+    #msg-check  - mensagem enviada mas nao recebida, tambem serve para mensagem recebida mas nao lida
+
+    '''
+        BOTAO NAO TEM WHATS:
+        <button data-testid="popup-controls-ok" class="emrlamx0 aiput80m h1a80dm5 sta02ykp g0rxnol2 l7jjieqr hnx8ox4h f8jlpxt4 l1l4so3b le5p0ye3 m2gb0jvt rfxpxord gwd8mfxi mnh9o63b qmy7ya1v dcuuyf4k swfxs4et bgr8sfoe a6r886iw fx1ldmn8 orxa12fk bkifpc9x hjo1mxmu oixtjehm rpz5dbxo bn27j4ou snayiamo szmswy5k"><div class="tvf2evcx m0h2a7mj lb5m6g5c j7l1k36l ktfrpxia nu7pwgvd p357zi0d dnb887gk gjuq5ydh i2cterl7 ac2vgrno sap93d0t gndfcl4n"><div class="tvf2evcx m0h2a7mj lb5m6g5c j7l1k36l ktfrpxia nu7pwgvd p357zi0d dnb887gk gjuq5ydh i2cterl7 i6vnu1w3 qjslfuze ac2vgrno sap93d0t gndfcl4n" data-testid="content">OK</div></div></button>
+    '''
 
     WebDriverWait(driver, 20).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, selectorSendButton))

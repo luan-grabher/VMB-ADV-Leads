@@ -2,6 +2,7 @@ from __future__ import print_function
 import json
 
 import os.path
+import re
 import time
 import pandas as pd
 
@@ -10,6 +11,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from urllib.parse import quote
 
 from config import getConfig
 
@@ -143,6 +145,10 @@ def getProcessosFromPlanilha(config, planilhaId):
     return processos
 
 def atualizaProcessosFromPlanilha(config, planilhaId, processos):
+    whatsappConfig = config['whatsapp']
+    messageTemplatePath = "whatsappMensagemTemplate.txt"
+    messageTemplate = open(messageTemplatePath, 'r', encoding='utf-8').read()
+
     sheetName = config['googleSheets']['sheetName']
 
     credentials = get_credentials()
@@ -164,9 +170,26 @@ def atualizaProcessosFromPlanilha(config, planilhaId, processos):
 
                 telefones = json.loads(processo['Telefone']) if 'Telefone' in processo else None
                 lenTelefones = len(telefones) if telefones != None and type(telefones) is list else 0
-                row[colunaTelefone1] = telefones[0] if lenTelefones > 0 else None
-                row[colunaTelefone2] = telefones[1] if lenTelefones > 1 else None
-                row[colunaTelefone3] = telefones[2] if lenTelefones > 2 else None                
+
+                socio = processo['Socio'] if 'Socio' in processo else None
+                cliente = processo['Cliente'] if 'Cliente' in processo else None
+                nome = cliente if cliente else socio
+
+                telefone1 = None
+                if lenTelefones > 0:
+                    telefone1 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefones[0])
+
+                telefone2 = None
+                if lenTelefones > 1:
+                    telefone2 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefones[1])
+
+                telefone3 = None
+                if lenTelefones > 2:
+                    telefone3 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefones[2])
+                                                            
+                row[colunaTelefone1] = telefone1
+                row[colunaTelefone2] = telefone2
+                row[colunaTelefone3] = telefone3
 
                 break
 
@@ -175,6 +198,22 @@ def atualizaProcessosFromPlanilha(config, planilhaId, processos):
     }
 
     result = sheet.values().update(spreadsheetId=planilhaId, range=sheetName + '!A1', valueInputOption='USER_ENTERED', body=body).execute()    
+
+def getTelefoneOrWhatsappLink(messageTemplate, assinatura, nome, phone):
+    if not nome:
+        return phone
+
+    
+
+    phone = re.sub(r'[^\d]', '', phone)
+    label = f'({phone[0:2]}) {phone[2:]}'
+
+    phone = '+55' + phone    
+
+    message = messageTemplate.format(nome=nome, assinatura = assinatura)
+    whatsapp_link = f"https://web.whatsapp.com/send?phone={phone}&text={quote(message)}"
+    return '=HYPERLINK("' + whatsapp_link + '";"' + label + '")'
+    
 
 if __name__ == '__main__':
     config =  getConfig()
