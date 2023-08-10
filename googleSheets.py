@@ -159,8 +159,18 @@ def atualizaProcessosFromPlanilha(config, planilhaId, processos):
     values = result.get('values', [])
 
     #para cada processo, atualiza o status
-    for index, processo in processos.iterrows():
-        for row in values:
+    for row in values:
+        isFindProcesso = False
+
+        socio = row[colunaSocio] if len(row) > colunaSocio else None
+        cliente = row[colunaCliente] if len(row) > colunaCliente else None
+        nome = cliente if cliente else socio
+
+        for index, processo in processos.iterrows():
+            socio = processo['Socio'] if 'Socio' in processo else None
+            cliente = processo['Cliente'] if 'Cliente' in processo else None
+            nome = cliente if cliente else socio
+
             if len(row) > colunaProcesso and row[colunaProcesso] == processo['Processo']:
                 #add columns if not exists
                 while len(row) < colunaTelefone3 + 1:
@@ -168,12 +178,11 @@ def atualizaProcessosFromPlanilha(config, planilhaId, processos):
 
                 row[colunaStatus] = processo['Status'] if 'Status' in processo else None
 
-                telefones = json.loads(processo['Telefone']) if 'Telefone' in processo else None
-                lenTelefones = len(telefones) if telefones != None and type(telefones) is list else 0
+                if not 'Telefone' in processo or processo['Telefone'] == None or processo['Telefone'] == '':
+                    continue
 
-                socio = processo['Socio'] if 'Socio' in processo else None
-                cliente = processo['Cliente'] if 'Cliente' in processo else None
-                nome = cliente if cliente else socio
+                telefones = json.loads(processo['Telefone'])
+                lenTelefones = len(telefones) if telefones != None and type(telefones) is list else 0
 
                 telefone1 = None
                 if lenTelefones > 0:
@@ -191,7 +200,22 @@ def atualizaProcessosFromPlanilha(config, planilhaId, processos):
                 row[colunaTelefone2] = telefone2
                 row[colunaTelefone3] = telefone3
 
+                isFindProcesso = True
                 break
+            
+        if not isFindProcesso:
+            telefone1 = row[colunaTelefone1] if len(row) > colunaTelefone1 else None
+            telefone2 = row[colunaTelefone2] if len(row) > colunaTelefone2 else None
+            telefone3 = row[colunaTelefone3] if len(row) > colunaTelefone3 else None
+
+            if telefone1:
+                row[colunaTelefone1] = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefone1)
+
+            if telefone2:
+                row[colunaTelefone2] = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefone2)
+
+            if telefone3:
+                row[colunaTelefone3] = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefone3)
 
     body = {
         'values': values
@@ -229,4 +253,6 @@ if __name__ == '__main__':
     processos_fakes['Telefone'] = [json.dumps(['(51) 99999-9999', '(51) 99999-9999']), json.dumps(['(51) 99999-9999']), None]
     processos_fakes['Tribunal'] = ['TJSP', 'TJRS', 'TJMT']
 
-    insert_processos_on_sheet(config, processos_fakes)
+    #insert_processos_on_sheet(config, processos_fakes)
+
+    atualizaProcessosFromPlanilha(config, config['googleSheets']['sheetId'], processos_fakes)
