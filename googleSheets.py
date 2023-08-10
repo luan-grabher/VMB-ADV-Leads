@@ -167,9 +167,9 @@ def atualizaProcessosFromPlanilha(config, planilhaId, processos):
         nome = cliente if cliente else socio
 
         for index, processo in processos.iterrows():
-            socio = processo['Socio'] if 'Socio' in processo else None
-            cliente = processo['Cliente'] if 'Cliente' in processo else None
-            nome = cliente if cliente else socio
+            socio_processo = processo['Socio'] if 'Socio' in processo else None
+            cliente_processo = processo['Cliente'] if 'Cliente' in processo else None
+            nome_whatsapp = cliente_processo if cliente_processo else socio_processo
 
             if len(row) > colunaProcesso and row[colunaProcesso] == processo['Processo']:
                 #add columns if not exists
@@ -186,15 +186,15 @@ def atualizaProcessosFromPlanilha(config, planilhaId, processos):
 
                 telefone1 = None
                 if lenTelefones > 0:
-                    telefone1 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefones[0])
+                    telefone1 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome_whatsapp, telefones[0])
 
                 telefone2 = None
                 if lenTelefones > 1:
-                    telefone2 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefones[1])
+                    telefone2 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome_whatsapp, telefones[1])
 
                 telefone3 = None
                 if lenTelefones > 2:
-                    telefone3 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome, telefones[2])
+                    telefone3 = getTelefoneOrWhatsappLink(messageTemplate, whatsappConfig['assinatura'], nome_whatsapp, telefones[2])
                                                             
                 row[colunaTelefone1] = telefone1
                 row[colunaTelefone2] = telefone2
@@ -229,13 +229,16 @@ def getTelefoneOrWhatsappLink(messageTemplate, assinatura, nome, phone):
 
     
 
-    phone = re.sub(r'[^\d]', '', phone)
-    label = f'({phone[0:2]}) {phone[2:]}'
+    phone_numbers = re.sub(r'[^\d]', '', phone)
+    if len(phone_numbers) < 11:
+        return phone
 
-    phone = '+55' + phone    
+    label = f'({phone_numbers[0:2]}) {phone_numbers[2:]}'
+
+    phone_numbers = '+55' + phone_numbers    
 
     message = messageTemplate.format(nome=nome, assinatura = assinatura)
-    whatsapp_link = f"https://web.whatsapp.com/send?phone={phone}&text={quote(message)}"
+    whatsapp_link = f"https://web.whatsapp.com/send?phone={phone_numbers}&text={quote(message)}"
     return '=HYPERLINK("' + whatsapp_link + '";"' + label + '")'
     
 
