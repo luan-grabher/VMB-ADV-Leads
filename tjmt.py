@@ -32,46 +32,51 @@ def get_dados_processos_tjmt(config, processos):
 
     dados_processos = pd.DataFrame()
     for index, processo in processos.iterrows():
-        isProcessoExistsOnPlanilha = processos_planilha['Processo'].str.contains(processo['Processo']).any() if not processos_planilha.empty else False
-        if isProcessoExistsOnPlanilha:
-            dados_processos = pd.concat([dados_processos, processos_planilha[processos_planilha['Processo'].str.contains(processo['Processo'])]])
-            continue
+        try:
+            isProcessoExistsOnPlanilha = processos_planilha['Processo'].str.contains(processo['Processo']).any() if not processos_planilha.empty else False
+            if isProcessoExistsOnPlanilha:
+                dados_processos = pd.concat([dados_processos, processos_planilha[processos_planilha['Processo'].str.contains(processo['Processo'])]])
+                continue
 
-        isProcessoExistsOnDadosProcessos = dados_processos['Processo'].str.contains(processo['Processo']).any() if not dados_processos.empty else False
-        if isProcessoExistsOnDadosProcessos:
-            continue
+            isProcessoExistsOnDadosProcessos = dados_processos['Processo'].str.contains(processo['Processo']).any() if not dados_processos.empty else False
+            if isProcessoExistsOnDadosProcessos:
+                continue
 
-        acessar_detalhes_processo(driver, consultaConfig, processo)
+            acessar_detalhes_processo(driver, consultaConfig, processo)
 
-        valorAcaoProcesso = get_valor_acao_processo(
-            driver, consultaConfig)
-        if valorAcaoProcesso >= valorMinimo:
-            
-            if not hasAdvogado(driver, consultaConfig):
+            valorAcaoProcesso = get_valor_acao_processo(
+                driver, consultaConfig)
+            if valorAcaoProcesso >= valorMinimo:
+                
+                if not hasAdvogado(driver, consultaConfig):
 
-                banco, cliente, socio, cnpj, cpf = get_partes(driver, consultaConfig)
+                    banco, cliente, socio, cnpj, cpf = get_partes(driver, consultaConfig)
 
-                data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
-                documento = cnpj if cnpj != None and cnpj != '' else cpf
+                    data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
+                    documento = cnpj if cnpj != None and cnpj != '' else cpf
 
-                processo = {
-                        'Data Distribuicao': [data_hora_distribuicao],
-                        'Processo': [processo['Processo']],
-                        'Valor': [valorAcaoProcesso],
-                        'Cliente': [cliente],
-                        'Socio': [socio],
-                        'Documento': [documento],
-                        'Banco': [banco],
-                        'Tribunal' : ['TJMT'],
-                        'Status': ['Aguardando telefones']
-                }
+                    processo = {
+                            'Data Distribuicao': [data_hora_distribuicao],
+                            'Processo': [processo['Processo']],
+                            'Valor': [valorAcaoProcesso],
+                            'Cliente': [cliente],
+                            'Socio': [socio],
+                            'Documento': [documento],
+                            'Banco': [banco],
+                            'Tribunal' : ['TJMT'],
+                            'Status': ['Aguardando telefones']
+                    }
 
-                insert_processos_on_sheet(config, pd.DataFrame(processo))
+                    insert_processos_on_sheet(config, pd.DataFrame(processo))
 
-                dados_processos = pd.concat([
-                    dados_processos,
-                    pd.DataFrame(processo)
+                    dados_processos = pd.concat([
+                        dados_processos,
+                        pd.DataFrame(processo)
                 ])
+        except Exception as e:
+            print('Erro ao consultar processo: ' + processo['Processo'])
+            print(e)
+            continue
 
     driver.quit()
 
