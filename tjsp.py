@@ -31,43 +31,48 @@ def get_dados_processos_tjsp(config, processos):
 
     dados_processos = pd.DataFrame()
     for index, processo in processos.iterrows():
-        isProcessoExistsOnPlanilha = processos_planilha['Processo'].str.contains(processo['Processo']).any() if not processos_planilha.empty else False
-        if isProcessoExistsOnPlanilha:
-            dados_processos = pd.concat([dados_processos, processos_planilha[processos_planilha['Processo'].str.contains(processo['Processo'])]])
+        try:
+            isProcessoExistsOnPlanilha = processos_planilha['Processo'].str.contains(processo['Processo']).any() if not processos_planilha.empty else False
+            if isProcessoExistsOnPlanilha:
+                dados_processos = pd.concat([dados_processos, processos_planilha[processos_planilha['Processo'].str.contains(processo['Processo'])]])
+                continue
+
+            isProcessoExistsOnDadosProcessos = dados_processos['Processo'].str.contains(processo['Processo']).any() if not dados_processos.empty else False
+            if isProcessoExistsOnDadosProcessos:
+                continue
+
+            acessar_detalhes_processo(driver, consultaConfig, processo)
+
+            valorAcaoProcesso = get_valor_acao_processo(
+                driver, consultaConfig, valorMinimo)
+            if valorAcaoProcesso >= valorMinimo:
+
+                banco, cliente, socio = get_partes(driver, consultaConfig)
+                if 'Advogad' not in cliente and 'Advogad' not in socio:
+                    data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
+                    documento = get_cnpj_ou_cpf(driver, consultaConfig)
+
+                    processo = pd.DataFrame({
+                        'Data Distribuicao': [data_hora_distribuicao],
+                        'Processo': [processo['Processo']],
+                        'Valor': [valorAcaoProcesso],
+                        'Cliente': [cliente],
+                        'Socio': [socio],
+                        'Documento': [documento],
+                        'Banco': [banco],
+                        'Tribunal' : ['TJSP']
+                    })
+
+                    insert_processos_on_sheet(config, processo)
+
+                    dados_processos = pd.concat([
+                        dados_processos,
+                        processo
+                    ])
+        except Exception as e:
+            print('Erro ao consultar processo: ' + processo['Processo'])
+            print(e)
             continue
-
-        isProcessoExistsOnDadosProcessos = dados_processos['Processo'].str.contains(processo['Processo']).any() if not dados_processos.empty else False
-        if isProcessoExistsOnDadosProcessos:
-            continue
-
-        acessar_detalhes_processo(driver, consultaConfig, processo)
-
-        valorAcaoProcesso = get_valor_acao_processo(
-            driver, consultaConfig, valorMinimo)
-        if valorAcaoProcesso >= valorMinimo:
-
-            banco, cliente, socio = get_partes(driver, consultaConfig)
-            if 'Advogad' not in cliente and 'Advogad' not in socio:
-                data_hora_distribuicao = get_data_hora_distribuicao(driver, consultaConfig)
-                documento = get_cnpj_ou_cpf(driver, consultaConfig)
-
-                processo = pd.DataFrame({
-                    'Data Distribuicao': [data_hora_distribuicao],
-                    'Processo': [processo['Processo']],
-                    'Valor': [valorAcaoProcesso],
-                    'Cliente': [cliente],
-                    'Socio': [socio],
-                    'Documento': [documento],
-                    'Banco': [banco],
-                    'Tribunal' : ['TJSP']
-                })
-
-                insert_processos_on_sheet(config, processo)
-
-                dados_processos = pd.concat([
-                    dados_processos,
-                    processo
-                ])
 
     driver.quit()
 
