@@ -77,6 +77,8 @@ def getDadosFromFile(config, filefullpath):
         if isValid:
             dadosFiltrados = pd.concat([dadosFiltrados, dado.to_frame().transpose()], ignore_index=True)
 
+    if dadosFiltrados.empty:
+        raise Exception('Nenhum processo com os filtros encontrado no arquivo excel')
     
     TJSP = dadosFiltrados.loc[dadosFiltrados['Tribunal'] == 'TJSP']
     TJRS = dadosFiltrados.loc[dadosFiltrados['Tribunal'] == 'TJRS']
@@ -87,7 +89,7 @@ def getDadosFromFile(config, filefullpath):
 if __name__ == "__main__":
     config = getConfig()
 
-    arquivoTeste = './tmp/arquivo.xlsx'
+    arquivoTeste = './tmp/teste.xlsx'
     print(
         getDadosFromFile(config, arquivoTeste)
     )

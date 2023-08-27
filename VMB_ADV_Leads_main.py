@@ -48,6 +48,7 @@ def main():
 
         messagebox.showinfo('Processos inseridos na planilha', 'Processos inseridos na planilha, execução finalizada')
     except Exception as e:
+        print(e)
         messagebox.showerror('Erro', str(e))
 
 def selecionaTribunal():
