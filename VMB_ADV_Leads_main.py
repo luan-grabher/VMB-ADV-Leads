@@ -15,7 +15,7 @@ def main():
 
         tribunalSelecionado = selecionaTribunal()
 
-        if tribunalSelecionado != 'SOMENTE COMPLETAR TELEFONES':        
+        if tribunalSelecionado != 'COMPLETAR TELEFONES ASSERTIVA':        
             Tk().withdraw()
             messagebox.showinfo('Selecione o arquivo xlsx da remessa do dia', 'Selecione o arquivo xlsx da remessa do dia')
             attachment_filename = filedialog.askopenfilename(defaultextension='.xlsx', filetypes=[('Arquivo Excel', '*.xlsx')])
@@ -40,11 +40,12 @@ def main():
             if tribunalSelecionado == 'TJSP':
                 processos = get_dados_processos_tjsp(config, TJSP) if len(TJSP) > 0 else pd.DataFrame()
 
-        if len(processos) == 0 and tribunalSelecionado != 'SOMENTE COMPLETAR TELEFONES':
+        if len(processos) == 0 and tribunalSelecionado != 'COMPLETAR TELEFONES ASSERTIVA':
             messagebox.showerror('Nenhum processo encontrado', 'Nenhum processo encontrado')
             return
 
-        putTelefonesOnProcessos(config)
+        if tribunalSelecionado == 'COMPLETAR TELEFONES ASSERTIVA':
+            putTelefonesOnProcessos(config)
 
         messagebox.showinfo('Processos inseridos na planilha', 'Processos inseridos na planilha, execução finalizada')
     except Exception as e:
@@ -52,7 +53,7 @@ def main():
         messagebox.showerror('Erro', str(e))
 
 def selecionaTribunal():
-    options = list(['TJMT', 'TJRS', 'TJSP', 'SOMENTE COMPLETAR TELEFONES'])
+    options = list(['TJMT', 'TJRS', 'TJSP', 'COMPLETAR TELEFONES ASSERTIVA'])
     
     selected = choicebox("Selecione o tribunal", "Tribunais disponíveis", options)
     if not selected:
